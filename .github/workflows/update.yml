@@ -1,0 +1,53 @@
+name: Refresh dashboard
+
+on:
+  schedule:
+    - cron: "15 22 * * 2-6"   # 22:15 UTC Tue-Sat, ~2h after the US close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+
+      - name: Rebuild data.json
+        env:
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+        run: python update.py
+
+      # data.json always carries a fresh "generated" stamp, so this commits on every
+      # run. That is deliberate: GitHub disables scheduled workflows after 60 days
+      # with no repository activity, and a daily commit keeps the cron alive.
+      - name: Commit
+        run: |
+          git config user.name  "dashboard-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "data: $(date -u +%Y-%m-%d)"
+          git push
+
+      # enablement:true turns Pages on via the API from inside the run, using the
+      # workflow's own `pages: write` permission. bootstrap.sh did this with
+      # `gh api repos/OWNER/REPO/pages`; doing it here means the repo needs no
+      # manual Settings > Pages step at all. It is a no-op once Pages is on.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - uses: actions/deploy-pages@v4

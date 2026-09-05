@@ -1,0 +1,25 @@
+{
+  "_comment": "Editorial content. Numbers here are NOT auto-refreshed. Each block carries its own as_of date and the dashboard prints it, so stale commentary is visible rather than silently wrong.",
+  "ethbtc_levels": [
+    [0.0352, "next resistance"],
+    [0.0316, "resistance"],
+    [0.0300, "the shelf"],
+    [0.0259, "support"]
+  ],
+  "adoption": {
+    "as_of": "2026-09-05",
+    "cards": [
+      ["Stablecoins on Ethereum", "$159B", "56% of all stablecoin value, over 65% counting L2s. 27.1m holders."],
+      ["Tokenized assets, all chains", "$38.2B", "Past $38B on 6 Aug, growing about 30% a quarter. Excludes stablecoins."],
+      ["Ethereum's share of RWAs", "$17.7B", "Roughly 57% of issuer TVL. BlackRock, JPMorgan and Amundi funds sit here."],
+      ["RWA holders", "1.70m", "Up 56% in a month."],
+      ["Spot ETH ETF inflows", "$1.4B", "Ten straight days in late August, over $1B of it BlackRock's ETHA."],
+      ["Institutional ownership of SBET", "~60%", "Company disclosure, 18 Aug."]
+    ],
+    "caveat": "Messari's August read found Ethereum's fundamentals close to flat \u2014 tokenized RWA value +2.1%, stablecoin supply +0.2%, application revenue +1.6%, transactions \u22123.2%. Unique active addresses (+7.7%) were the only mover. Flows recovered; usage didn't."
+  },
+  "treasury_note": {
+    "as_of": "2026-09-05",
+    "text": "Accumulation was ferocious through August 2025, then essentially stopped. Whatever is driving the equity's rerating, it is not the company buying more ether."
+  }
+}

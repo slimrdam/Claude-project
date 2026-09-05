@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SBET vs ETH — mNAV monitor</title>
+<meta name="description" content="Daily tracker of SharpLink Gaming's market value against the ether it holds.">
+<style>
+  :root{
+    --ground:#12161f;--panel:#181d28;--rule:#262d3c;--rule2:#333c50;
+    --ink:#e4e8f0;--mute:#7e889c;--dim:#59627a;
+    --sbet:#f2a33c;--eth:#8091f5;--up:#3fbf74;--dn:#e05a4e;--vol:#28324a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"Inter","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:26px;line-height:1.15;letter-spacing:-.02em;font-weight:650;margin:0 0 6px}
+  h2{font-size:17px;letter-spacing:-.01em;font-weight:620;margin:0 0 3px}
+  h3{font-size:13px;font-weight:600;color:var(--mute);margin:0 0 12px}
+  p{margin:0 0 12px;max-width:68ch;color:#c3cad8}
+  .sub{color:var(--mute);font-size:13.5px;margin:0}
+  section{margin-top:42px}
+  b{font-weight:640}
+  .hero{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:22px;padding:20px 0}
+  .figs{display:flex;flex-wrap:wrap;gap:26px 38px;align-items:flex-end}
+  .fig{min-width:112px}
+  .fig .v{font-size:29px;font-weight:650;letter-spacing:-.025em;line-height:1}
+  .fig .l{font-size:12.5px;color:var(--mute);margin-top:6px;max-width:21ch}
+  .pos{color:var(--up)}.neg{color:var(--dn)}
+  .lg{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute);margin:0 0 14px}
+  .lg i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px;font-style:normal}
+  .lg .ln{width:14px;height:2px;border-radius:0;vertical-align:4px}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .gridline{stroke:var(--rule);stroke-width:1}
+  .axtx{fill:var(--dim);font-size:10.5px;font-family:inherit}
+  .panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px 16px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--rule)}
+  th{color:var(--mute);font-weight:600;position:sticky;top:0;background:var(--panel)}
+  td:first-child,th:first-child{text-align:left;color:var(--mute)}
+  .scroll{max-height:360px;overflow:auto;border:1px solid var(--rule);border-radius:8px;background:var(--panel)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px}
+  .card .v{font-size:21px;font-weight:640;letter-spacing:-.02em}
+  .card .k{font-size:12.5px;color:var(--mute);margin-bottom:7px}
+  .card .n{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.4}
+  .note{font-size:12.5px;color:var(--mute);max-width:72ch}
+  .note b,.card .n b{color:#b8c0d0}
+  ul{padding-left:18px;margin:0 0 12px;color:#c3cad8;font-size:13.5px}
+  li{margin-bottom:7px}
+  .tag{display:inline-block;font-size:11.5px;color:var(--dim);border:1px solid var(--rule2);
+    border-radius:20px;padding:2px 9px;margin:0 6px 6px 0}
+  #tip{font-size:12.5px;color:var(--mute);min-height:19px;margin-top:8px}
+  #tip b{color:var(--ink)}
+  .banner{border:1px solid var(--dn);background:rgba(224,90,78,.09);color:#f0b5af;
+    border-radius:9px;padding:11px 14px;font-size:13px;margin-top:18px}
+  .asof{font-size:11.5px;color:var(--dim);margin-top:8px}
+  #err{display:none;border:1px solid var(--dn);background:rgba(224,90,78,.09);
+    border-radius:9px;padding:16px;color:#f0b5af;font-size:14px}
+  #load{color:var(--mute);font-size:14px;padding:40px 0}
+  @media (max-width:560px){h1{font-size:22px}.fig .v{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SharpLink against the ether it holds</h1>
+  <p class="sub" id="strap">Loading…</p>
+  <div id="stale" class="banner" style="display:none"></div>
+  <div id="err"></div>
+  <div id="load">Fetching data…</div>
+
+  <div id="app" style="display:none">
+    <div class="hero"><div class="figs">
+      <div class="fig"><div class="v" id="f1">–</div><div class="l" id="l1"></div></div>
+      <div class="fig"><div class="v" id="f2">–</div><div class="l" id="l2"></div></div>
+      <div class="fig"><div class="v" id="f3">–</div><div class="l" id="l3"></div></div>
+      <div class="fig"><div class="v" id="f4">–</div><div class="l" id="l4"></div></div>
+    </div></div>
+
+    <section>
+      <h2>SBET priced in ether</h2>
+      <h3 id="h-ratio"></h3>
+      <svg id="ratio" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg>
+      <p id="p-ratio" style="margin-top:14px"></p>
+    </section>
+
+    <section>
+      <h2>Monthly relative performance</h2>
+      <h3>SBET's monthly return minus ether's</h3>
+      <svg id="mbars" viewBox="0 0 1000 230" preserveAspectRatio="none"></svg>
+      <div class="cards" id="runs" style="margin-top:16px"></div>
+    </section>
+
+    <section>
+      <h2>Price, volume and the daily verdict</h2>
+      <h3 id="h-main"></h3>
+      <div class="lg">
+        <span><i class="ln" style="background:var(--sbet)"></i>SBET</span>
+        <span><i class="ln" style="background:var(--eth)"></i>ETH</span>
+        <span><i style="background:var(--vol)"></i>SBET volume</span>
+        <span><i style="background:var(--up)"></i>beat ether</span>
+        <span><i style="background:var(--dn)"></i>lagged ether</span>
+      </div>
+      <div class="panel">
+        <svg id="main" viewBox="0 0 1000 430" preserveAspectRatio="none"></svg>
+        <div id="tip">Tap or hover a session for the numbers.</div>
+      </div>
+      <p class="note" style="margin-top:14px" id="p-main"></p>
+    </section>
+
+    <section>
+      <h2>mNAV level</h2>
+      <h3 id="h-mnav"></h3>
+      <svg id="mnav" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg>
+      <p class="note" style="margin-top:12px" id="p-mnav"></p>
+    </section>
+
+    <section>
+      <h2>The treasury behind the multiple</h2>
+      <h3>Disclosed ETH holdings, from company releases</h3>
+      <svg id="hold" viewBox="0 0 1000 210" preserveAspectRatio="none"></svg>
+      <p class="note" style="margin-top:12px" id="p-hold"></p>
+    </section>
+
+    <section>
+      <h2>ETH/BTC</h2>
+      <h3 id="h-ebtc"></h3>
+      <svg id="ebtc" viewBox="0 0 1000 250" preserveAspectRatio="none"></svg>
+      <p class="note" style="margin-top:12px" id="p-ebtc"></p>
+    </section>
+
+    <section>
+      <h2>The adoption backdrop</h2>
+      <div class="cards" id="cards"></div>
+      <p class="note" style="margin-top:14px" id="p-adopt"></p>
+      <p class="asof" id="adopt-asof"></p>
+    </section>
+
+    <section>
+      <h2>Session data</h2>
+      <div class="scroll"><table id="tbl"><thead><tr>
+        <th>Date</th><th>SBET</th><th>SBET %</th><th>ETH</th><th>ETH %</th>
+        <th>Rel</th><th>Volume</th><th>Ratio</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Sources and limits</h2>
+      <ul>
+        <li>SBET daily bars from the Yahoo Finance chart API, split-adjusted, with Stooq as fallback.
+          ETH and BTC daily closes from CoinGecko, with CoinMarketCap's data API as fallback. Refreshed
+          by a scheduled job; history accumulates in <code>data.json</code> so the archive outlives any
+          single API's lookback window.</li>
+        <li>The green/red signal is SBET's daily return minus ether's, close to close, with weekend
+          crypto moves folded into the following session.</li>
+        <li>The ratio index needs no assumptions about share count or holdings, so it is the reliable
+          long series. The mNAV level does need them and is drawn for the last 90 days only.</li>
+        <li id="li-cfg"></li>
+        <li>ETH holdings are disclosure dates, not a daily series; the line between marks is drawn for
+          readability, not measured.</li>
+        <li>Adoption figures and the ETH/BTC levels are hand-maintained in <code>notes.json</code> and
+          carry their own review date above. They do not refresh with the price data.</li>
+      </ul>
+      <div style="margin-top:14px">
+        <span class="tag">Yahoo Finance</span><span class="tag">CoinGecko</span>
+        <span class="tag">CoinMarketCap</span><span class="tag">Company filings</span>
+      </div>
+      <p class="note" style="margin-top:16px" id="p-foot"></p>
+    </section>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+const el=(n,a={})=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const md=s=>{const p=s.split("-");return p[2].replace(/^0/,"")+" "+MON[+p[1]-1];};
+const my=s=>{const p=s.split("-");return MON[+p[1]-1]+(p[1]==="01"?" '"+p[0].slice(2):"");};
+const pc=(v,d)=>(v>=0?"+":"")+v.toFixed(d===undefined?2:d)+"%";
+const monthTicks=a=>{const t=[];let l="";a.forEach((r,i)=>{const m=r.d.slice(0,7);
+  if(m!==l){t.push([i,r.d]);l=m;}});return t;};
+
+fetch("data.json?t="+Date.now()).then(r=>{
+  if(!r.ok) throw new Error("data.json returned HTTP "+r.status);
+  return r.json();
+}).then(render).catch(e=>{
+  $("load").style.display="none";
+  $("err").style.display="block";
+  $("err").textContent="Could not load data.json — "+e.message+
+    ". The dashboard shows nothing rather than something stale.";
+});
+
+function render(D){
+  const S=D.series, B=S.filter(r=>r.rel!==undefined), st=D.stats, N=D.notes;
+  $("load").style.display="none"; $("app").style.display="block";
+  $("strap").textContent="Every session from "+md(S[0].d)+" "+S[0].d.slice(0,4)+" to "+
+    md(S[S.length-1].d)+" "+S[S.length-1].d.slice(0,4)+". "+S.length+
+    " trading days. Updated "+D.generated+".";
+
+  if(D.config.stale){
+    $("stale").style.display="block";
+    $("stale").innerHTML="<b>Holdings and share count are "+D.config.stale_days+
+      " days old.</b> No free API publishes them, so they are maintained by hand in "+
+      "config.json. The mNAV panel below is unreliable until they are refreshed; "+
+      "the ratio chart is unaffected.";
+  }
+
+  /* hero */
+  const hero=[
+    [pc(D.legs[0].r,1), "SBET vs ETH, whole period"],
+    [pc(D.legs[2].r,1), "SBET vs ETH, current run"],
+    [st.ri_now.toFixed(1), st.shelf? "Ratio now, against "+st.shelf+" resistance"
+                                   : "Ratio now — above every prior top"],
+    [st.mnav_now? st.mnav_now.toFixed(2)+"\u00D7":"n/a",
+     "mNAV now, from "+(st.mnav_low? st.mnav_low.toFixed(2):"–")+" at the low"]];
+  hero.forEach(([v,l],i)=>{
+    const f=$("f"+(i+1)); f.textContent=v; $("l"+(i+1)).textContent=l;
+    if(i<2) f.className="v "+(parseFloat(v)>=0?"pos":"neg");
+  });
+
+  /* ---- ratio ---- */
+  $("h-ratio").textContent="SBET \u00F7 ETH, indexed to "+md(S[0].d)+" "+S[0].d.slice(0,4)+
+    " = 100. This is the mNAV, stripped of assumptions";
+  (function(){
+    const svg=$("ratio"),W=1000,PL=46,PR=56,PT=18,H=230,n=S.length;
+    const vals=S.map(r=>r.ri), lo=Math.min(...vals)-6, hi=Math.max(...vals, st.shelf||0)+8;
+    const step=(W-PL-PR)/(n-1), x=i=>PL+i*step, y=v=>PT+H-(v-lo)/(hi-lo)*H;
+    const tick=Math.max(5,Math.round((hi-lo)/5/5)*5);
+    for(let v=Math.ceil(lo/tick)*tick;v<hi;v+=tick){
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(v),y2:y(v),class:"gridline"}));
+      const t=el("text",{x:PL-8,y:y(v)+3.5,class:"axtx","text-anchor":"end"});
+      t.textContent=v;svg.appendChild(t);}
+    if(st.shelf){
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(st.shelf),y2:y(st.shelf),
+        stroke:"var(--dn)","stroke-width":1.2,"stroke-dasharray":"4 4",opacity:.8}));
+      const t=el("text",{x:W-PR+6,y:y(st.shelf)+4,class:"axtx",fill:"var(--dn)"});
+      t.textContent=st.shelf+" prior top";svg.appendChild(t);}
+    svg.appendChild(el("path",{d:S.map((r,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(r.ri).toFixed(1)).join(" "),
+      fill:"none",stroke:"var(--sbet)","stroke-width":1.9,"stroke-linejoin":"round"}));
+    const li=vals.indexOf(Math.min(...vals));
+    [[li,"low "+st.low_ri,18],[n-1,st.ri_now+" now",-12]].forEach(([i,tx,dy])=>{
+      svg.appendChild(el("circle",{cx:x(i),cy:y(vals[i]),r:3.4,fill:"var(--sbet)"}));
+      const t=el("text",{x:x(i)+(i===n-1?-6:0),y:y(vals[i])+dy,class:"axtx",fill:"var(--mute)",
+        "text-anchor":i===n-1?"end":"middle"});t.textContent=tx;svg.appendChild(t);});
+    monthTicks(S).forEach(([i,d],k)=>{if(k%2)return;
+      const t=el("text",{x:x(i),y:PT+H+20,class:"axtx","text-anchor":"middle"});
+      t.textContent=my(d);svg.appendChild(t);});
+  })();
+  const dead=D.runs.filter(r=>!r.live), liveRun=D.runs.find(r=>r.live);
+  $("p-ratio").innerHTML="The ratio bottomed at <b>"+st.low_ri+"</b> on "+md(st.low_d)+" "+
+    st.low_d.slice(0,4)+" and reads <b>"+st.ri_now+"</b> now. "+
+    (st.shelf
+      ? "The nearest prior rally top sits at <b>"+st.shelf+"</b>, "+st.shelf_gap+
+        "% above — that is the level to watch. "+dead.length+" earlier "+
+        (dead.length===1?"run":"runs")+" in this window ended without clearing it."
+      : "It has cleared every prior rally top in this window, which is the first genuinely new "+
+        "information this chart has produced.");
+
+  /* ---- monthly bars ---- */
+  (function(){
+    const svg=$("mbars"),W=1000,PL=46,PR=46,PT=16,H=150,M=D.months,n=M.length;
+    const step=(W-PL-PR)/n,bw=step*0.62,mx=Math.max(...M.map(m=>Math.abs(m.r)))*1.12;
+    const x=i=>PL+step*(i+0.5),y=v=>PT+H/2-v/mx*(H/2);
+    svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(0),y2:y(0),stroke:"var(--rule2)","stroke-width":1}));
+    [-20,-10,10,20].forEach(v=>{if(Math.abs(v)>mx)return;
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(v),y2:y(v),class:"gridline"}));
+      const t=el("text",{x:PL-8,y:y(v)+3.5,class:"axtx","text-anchor":"end"});
+      t.textContent=(v>0?"+":"")+v+"%";svg.appendChild(t);});
+    const liveMonths=liveRun? M.filter(m=>m.m>=liveRun.a).length : 0;
+    M.forEach((m,i)=>{
+      svg.appendChild(el("rect",{x:x(i)-bw/2,y:Math.min(y(m.r),y(0)),width:bw,
+        height:Math.abs(y(m.r)-y(0)),fill:m.r>0?"var(--up)":"var(--dn)",
+        opacity:i>=n-liveMonths?1:.5}));
+      const t=el("text",{x:x(i),y:PT+H+20,class:"axtx","text-anchor":"middle"});
+      t.textContent=my(m.m+"-01");svg.appendChild(t);
+      const v=el("text",{x:x(i),y:y(m.r)+(m.r>0?-6:13),class:"axtx","text-anchor":"middle",
+        fill:m.r>0?"var(--up)":"var(--dn)"});
+      v.textContent=(m.r>0?"+":"")+m.r.toFixed(0);svg.appendChild(v);});
+  })();
+  $("runs").innerHTML=D.runs.map(r=>{
+    const span=r.a===r.b? my(r.a+"-01")+" "+r.a.slice(0,4) : my(r.a+"-01")+" \u2013 "+my(r.b+"-01")+" "+r.b.slice(0,4);
+    const tail=r.live
+      ? "<b>Still running.</b> "+r.n+" month"+(r.n>1?"s":"")+" \u2014 "+
+        (r.n>Math.max(0,...dead.map(x=>x.n))?"the longest of the period.":"not yet the longest.")
+      : "Ended. The next month gave back "+r.after.toFixed(1)+"%.";
+    return '<div class="card"'+(r.live?' style="border-color:var(--up)"':'')+'><div class="k">'+
+      span+'</div><div class="v'+(r.r>0?' pos':'')+'">'+pc(r.r,1)+
+      '</div><div class="n">'+tail+'</div></div>';}).join("");
+
+  /* ---- main overlay ---- */
+  $("h-main").textContent="Rebased to "+md(S[0].d)+" "+S[0].d.slice(0,4)+
+    " = 100. Green bars are sessions SBET beat ether";
+  (function(){
+    const svg=$("main"),W=1000,PL=44,PR=46,PT=14,PH=250,GAP=16,VH=64,SH=62,n=S.length;
+    const step=(W-PL-PR)/(n-1),bw=Math.max(step*0.7,1.2);
+    const s0=S[0].sbet,e0=S[0].eth;
+    const rs=S.map(r=>r.sbet/s0*100),re=S.map(r=>r.eth/e0*100);
+    const lo=Math.max(0,Math.min(...rs,...re)-8),hi=Math.max(...rs,...re)+8;
+    const x=i=>PL+i*step,yP=v=>PT+PH-(v-lo)/(hi-lo)*PH;
+    const vmax=Math.max(...S.map(r=>r.vol)),vTop=PT+PH+GAP,yV=v=>vTop+VH-v/vmax*VH;
+    const sTop=vTop+VH+GAP+SH/2,smax=Math.max(...B.map(r=>Math.abs(r.rel))),yS=v=>sTop-v/smax*(SH/2);
+    [25,50,75,100,125,150].forEach(v=>{if(v<lo||v>hi)return;
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:yP(v),y2:yP(v),class:"gridline"}));
+      const t=el("text",{x:PL-8,y:yP(v)+3.5,class:"axtx","text-anchor":"end"});
+      t.textContent=v;svg.appendChild(t);});
+    S.forEach((r,i)=>svg.appendChild(el("rect",{x:x(i)-bw/2,y:yV(r.vol),width:bw,
+      height:vTop+VH-yV(r.vol),fill:"var(--vol)"})));
+    const vh=el("text",{x:PL-8,y:vTop+8,class:"axtx","text-anchor":"end"});
+    vh.textContent=(vmax/1e6).toFixed(0)+"m";svg.appendChild(vh);
+    svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:sTop,y2:sTop,stroke:"var(--rule2)","stroke-width":1}));
+    B.forEach(r=>{const i=S.indexOf(r),yy=yS(r.rel);
+      svg.appendChild(el("rect",{x:x(i)-bw/2,y:Math.min(yy,sTop),width:bw,
+        height:Math.abs(sTop-yy),fill:r.rel>0?"var(--up)":"var(--dn)"}));});
+    const pth=a=>a.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+yP(v).toFixed(1)).join(" ");
+    svg.appendChild(el("path",{d:pth(re),fill:"none",stroke:"var(--eth)","stroke-width":1.8,"stroke-linejoin":"round"}));
+    svg.appendChild(el("path",{d:pth(rs),fill:"none",stroke:"var(--sbet)","stroke-width":1.9,"stroke-linejoin":"round"}));
+    monthTicks(S).forEach(([i,d],k)=>{if(k%2)return;
+      const t=el("text",{x:x(i),y:sTop+SH/2+18,class:"axtx","text-anchor":"middle"});
+      t.textContent=my(d);svg.appendChild(t);});
+    const cur=el("line",{x1:0,x2:0,y1:PT,y2:sTop+SH/2,stroke:"var(--rule2)","stroke-width":1,opacity:0});
+    svg.appendChild(cur);
+    svg.appendChild(el("rect",{x:0,y:0,width:W,height:430,fill:"transparent"}));
+    function move(ev){
+      const bb=svg.getBoundingClientRect();
+      const px=(ev.touches?ev.touches[0].clientX:ev.clientX)-bb.left;
+      const i=Math.max(0,Math.min(n-1,Math.round((px/bb.width*W-PL)/step))),r=S[i];
+      cur.setAttribute("opacity",1);cur.setAttribute("x1",x(i));cur.setAttribute("x2",x(i));
+      $("tip").innerHTML="<b>"+md(r.d)+" "+r.d.slice(0,4)+"</b> \u00B7 SBET $"+r.sbet.toFixed(2)+
+        (r.rs!==undefined?" ("+pc(r.rs)+")":"")+" \u00B7 ETH $"+r.eth.toFixed(0)+
+        (r.re!==undefined?" ("+pc(r.re)+")":"")+" \u00B7 vol "+(r.vol/1e6).toFixed(1)+"m"+
+        (r.rel!==undefined?" \u00B7 <b style='color:"+(r.rel>0?"var(--up)":"var(--dn)")+
+        "'>rel "+pc(r.rel)+"</b>":"")+" \u00B7 ratio "+r.ri.toFixed(1);}
+    svg.addEventListener("mousemove",move);
+    svg.addEventListener("touchmove",e=>{move(e);e.preventDefault();},{passive:false});
+    svg.addEventListener("mouseleave",()=>{cur.setAttribute("opacity",0);
+      $("tip").textContent="Tap or hover a session for the numbers.";});
+  })();
+  $("p-main").innerHTML="Across all "+st.sessions+" measurable sessions SBET beat ether on <b>"+
+    st.green_pct+"%</b> of them. Green days average <b>"+pc(st.avg_green)+
+    "</b> of outperformance against <b>"+pc(st.avg_red)+"</b> on red ones.";
+
+  /* ---- mNAV ---- */
+  const A=S.filter(r=>r.mnav!==undefined);
+  $("h-mnav").textContent="Market cap \u00F7 ether held \u2014 "+
+    D.config.eth_held.toLocaleString()+" ETH, "+(D.config.shares/1e6).toFixed(1)+
+    "m shares, verified "+D.config.last_verified;
+  (function(){
+    const svg=$("mnav"),W=1000,PL=48,PR=46,PT=14,H=150,n=A.length;
+    const v=A.map(r=>r.mnav),lo=Math.min(...v)-.03,hi=Math.max(...v)+.03;
+    const step=(W-PL-PR)/(n-1),x=i=>PL+i*step,y=q=>PT+H-(q-lo)/(hi-lo)*H;
+    for(let q=Math.ceil(lo*50)/50;q<hi;q+=0.06){
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(q),y2:y(q),class:"gridline"}));
+      const t=el("text",{x:PL-8,y:y(q)+3.5,class:"axtx","text-anchor":"end"});
+      t.textContent=q.toFixed(2);svg.appendChild(t);}
+    svg.appendChild(el("path",{d:A.map((r,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(r.mnav).toFixed(1)).join(" "),
+      fill:"none",stroke:"var(--sbet)","stroke-width":2.2,"stroke-linejoin":"round"}));
+    [[v.indexOf(Math.min(...v)),17],[v.indexOf(Math.max(...v)),-10]].forEach(([i,dy])=>{
+      svg.appendChild(el("circle",{cx:x(i),cy:y(v[i]),r:3.5,fill:"var(--sbet)"}));
+      const t=el("text",{x:x(i)+(i>n-6?-6:0),y:y(v[i])+dy,class:"axtx",fill:"var(--mute)",
+        "text-anchor":i>n-6?"end":"middle"});
+      t.textContent=v[i].toFixed(3)+" \u00B7 "+md(A[i].d);svg.appendChild(t);});
+    A.forEach((r,i)=>{if(i%10&&i!==n-1)return;
+      const t=el("text",{x:x(i),y:PT+H+22,class:"axtx","text-anchor":"middle"});
+      t.textContent=md(r.d);svg.appendChild(t);});
+  })();
+  $("p-mnav").innerHTML="Last 90 sessions only. Both denominators drift \u2014 SharpLink's holdings "+
+    "and its share count \u2014 and neither is published daily, so extending a fixed-input mNAV "+
+    "further back would be fiction. For the long view use the ratio chart above.";
+
+  /* ---- holdings ---- */
+  (function(){
+    const svg=$("hold"),W=1000,PL=58,PR=58,PT=18,H=130,P=D.holdings,n=P.length;
+    const vs=P.map(p=>p[1]),lo=Math.min(...vs)*0.96,hi=Math.max(...vs)*1.04;
+    const step=(W-PL-PR)/(n-1),x=i=>PL+i*step,y=v=>PT+H-(v-lo)/(hi-lo)*H;
+    for(let v=Math.ceil(lo/50000)*50000;v<hi;v+=50000){
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(v),y2:y(v),class:"gridline"}));
+      const t=el("text",{x:PL-8,y:y(v)+3.5,class:"axtx","text-anchor":"end"});
+      t.textContent=(v/1000)+"k";svg.appendChild(t);}
+    svg.appendChild(el("path",{d:P.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(p[1]).toFixed(1)).join(" "),
+      fill:"none",stroke:"var(--eth)","stroke-width":2,"stroke-linejoin":"round"}));
+    P.forEach((p,i)=>{
+      svg.appendChild(el("circle",{cx:x(i),cy:y(p[1]),r:3.2,fill:"var(--eth)"}));
+      if(i===0||i===n-1){const t=el("text",{x:x(i),y:y(p[1])+16,class:"axtx",
+        "text-anchor":"middle",fill:"var(--mute)"});
+        t.textContent=p[1].toLocaleString();svg.appendChild(t);}
+      const dl=el("text",{x:x(i),y:PT+H+22,class:"axtx","text-anchor":"middle"});
+      dl.textContent=(i%2===0||i===n-1)?my(p[0]):"";svg.appendChild(dl);});
+  })();
+  (function(){
+    const P=D.holdings,ch=(P[P.length-1][1]/P[0][1]-1)*100;
+    $("p-hold").innerHTML=N.treasury_note.text+" Holdings have moved <b>"+pc(ch,1)+
+      "</b> since "+my(P[0][0])+" "+P[0][0].slice(0,4)+", and the most recent leg is "+
+      (P[P.length-1][1]<P[P.length-2][1]?"<b>down</b>":"up")+". Reviewed "+N.treasury_note.as_of+".";
+  })();
+
+  /* ---- ETH/BTC ---- */
+  const E=S.filter(r=>r.eb!==undefined);
+  $("h-ebtc").textContent=E.length? "Daily, computed from the same closes. Levels are hand-maintained"
+                                  : "No BTC data in this build";
+  if(E.length) (function(){
+    const svg=$("ebtc"),W=1000,PL=56,PR=124,PT=18,H=170,n=E.length;
+    const vs=E.map(r=>r.eb),L=N.ethbtc_levels.map(l=>l[0]);
+    const lo=Math.min(...vs,...L)*0.94,hi=Math.max(...vs,...L)*1.05;
+    const step=(W-PL-PR)/(n-1),x=i=>PL+i*step,y=v=>PT+H-(v-lo)/(hi-lo)*H;
+    N.ethbtc_levels.forEach(([v,tx])=>{
+      if(v<lo||v>hi)return;
+      svg.appendChild(el("line",{x1:PL,x2:W-PR,y1:y(v),y2:y(v),stroke:"var(--rule2)",
+        "stroke-width":1,"stroke-dasharray":"3 4"}));
+      const t=el("text",{x:W-PR+8,y:y(v)+3.5,class:"axtx"});
+      t.textContent=v.toFixed(4)+" "+tx;svg.appendChild(t);});
+    svg.appendChild(el("path",{d:E.map((r,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(r.eb).toFixed(1)).join(" "),
+      fill:"none",stroke:"var(--eth)","stroke-width":1.9,"stroke-linejoin":"round"}));
+    monthTicks(E).forEach(([i,d],k)=>{if(k%2)return;
+      const t=el("text",{x:x(i),y:PT+H+22,class:"axtx","text-anchor":"middle"});
+      t.textContent=my(d);svg.appendChild(t);});
+  })();
+  $("p-ebtc").innerHTML=E.length
+    ? "ETH/BTC reads <b>"+st.ebtc_now.toFixed(4)+"</b>. The marked levels are hand-maintained in "+
+      "notes.json and do not move with the data \u2014 revisit them when the ratio breaks range."
+    : "BTC prices were unavailable on the last run, so this panel is empty rather than guessed.";
+
+  /* ---- adoption ---- */
+  $("cards").innerHTML=N.adoption.cards.map(c=>
+    '<div class="card"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+
+    '</div><div class="n">'+c[2]+'</div></div>').join("");
+  $("p-adopt").textContent=N.adoption.caveat;
+  $("adopt-asof").textContent="These figures are hand-maintained and were last reviewed "+
+    N.adoption.as_of+". They do not refresh with the price data.";
+
+  /* ---- table + footer ---- */
+  $("tbl").querySelector("tbody").innerHTML=S.slice().reverse().map(r=>{
+    const c=r.rel===undefined?"":(r.rel>0?"pos":"neg");
+    return "<tr><td>"+md(r.d)+" "+r.d.slice(2,4)+"</td><td>"+r.sbet.toFixed(2)+"</td><td class='"+c+
+      "'>"+(r.rs===undefined?"\u2014":pc(r.rs))+"</td><td>"+r.eth.toFixed(0)+"</td><td>"+
+      (r.re===undefined?"\u2014":pc(r.re))+"</td><td class='"+c+"'><b>"+
+      (r.rel===undefined?"\u2014":pc(r.rel))+"</b></td><td>"+(r.vol/1e6).toFixed(2)+
+      "m</td><td>"+r.ri.toFixed(1)+"</td></tr>";}).join("");
+  $("li-cfg").innerHTML="Share count and ETH held are hand-entered in <code>config.json</code>: "+
+    D.config.shares.toLocaleString()+" shares and "+D.config.eth_held.toLocaleString()+
+    " ETH, last verified "+D.config.last_verified+". The mNAV level is worth \u00B10.02 either way.";
+  $("p-foot").textContent="Data generated "+D.generated+". Not investment advice.";
+}
+</script>
+</body>
+</html>

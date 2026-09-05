@@ -1,0 +1,23 @@
+{
+  "_comment": "Values that no free API publishes. Update these by hand from SharpLink filings and press releases. The dashboard shows a staleness banner when last_verified is older than stale_after_days.",
+  "ticker": "SBET",
+  "eth_held": 868699,
+  "shares_outstanding": 217220000,
+  "last_verified": "2026-09-05",
+  "stale_after_days": 30,
+  "sources": {
+    "eth_held": "The Block treasuries tracker + company press releases",
+    "shares_outstanding": "Yahoo Finance key statistics / latest 10-Q"
+  },
+  "holdings_history": [
+    ["2025-08-11", 728804],
+    ["2025-08-17", 740760],
+    ["2025-08-24", 797704],
+    ["2025-08-31", 837230],
+    ["2025-10-19", 859853],
+    ["2025-11-07", 860759],
+    ["2026-05-11", 872984],
+    ["2026-07-14", 886725],
+    ["2026-09-05", 868699]
+  ]
+}
