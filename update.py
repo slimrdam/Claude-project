@@ -29,12 +29,12 @@ def die(msg):
     sys.exit(1)
 
 
-def get(url, **kw):
+def get(url, headers=None, **kw):
     """GET with retries. Raises on final failure."""
     last = None
     for attempt in range(4):
         try:
-            r = requests.get(url, headers=UA, timeout=30, **kw)
+            r = requests.get(url, headers={**UA, **(headers or {})}, timeout=30, **kw)
             if r.status_code == 200:
                 return r
             last = f"HTTP {r.status_code}"
@@ -46,12 +46,74 @@ def get(url, **kw):
 
 # ---------------------------------------------------------------- equity
 
+def fetch_sbet_stockanalysis(ticker):
+    """stockanalysis.com daily history. Returns {date: (adj_close, volume)}.
+
+    Primary source. Yahoo answers 429 to GitHub's runner IPs -- query1, query2
+    and the crumb endpoint alike -- and Stooq now serves a JavaScript
+    proof-of-work page instead of CSV, so both sources below are dead from a
+    runner. This is the JSON behind stockanalysis.com/stocks/sbet/history/.
+    Undocumented, hence fetch_sbet_nasdaq behind it.
+
+    range=5Y, not MAX: MAX currently returns the same 253 rows as 1Y, which
+    starts 2025-09 and so misses the first month of the archive. 5Y reaches
+    2021 and reproduced all 275 archived closes exactly.
+
+    'a' is the split-adjusted close, 'c' the raw one; adj matches what
+    fetch_sbet took from Yahoo.
+    """
+    url = (f"https://stockanalysis.com/api/symbol/s/{ticker.lower()}/history"
+           f"?range=5Y&period=Daily")
+    j = get(url).json()
+    rows = j.get("data")
+    if not rows:
+        raise RuntimeError(f"stockanalysis returned no rows: {str(j)[:200]}")
+    out = {}
+    for x in rows:
+        d = x.get("t", "")
+        if d < START or x.get("a") is None or not x.get("v"):
+            continue
+        out[d] = (round(float(x["a"]), 4), int(x["v"]))
+    if not out:
+        raise RuntimeError("stockanalysis returned nothing at or after START")
+    return out
+
+
+def fetch_sbet_nasdaq(ticker):
+    """Fallback: Nasdaq's own quote API. Returns {date: (close, volume)}.
+
+    Takes an explicit date range, so it returns exactly the window asked for.
+    Close is unadjusted ("Close/Last"), $-prefixed, and volume is comma
+    grouped. SBET has had no splits in this window so unadjusted and adjusted
+    agree: it matched every archived close to within half a cent.
+    """
+    url = (f"https://api.nasdaq.com/api/quote/{ticker}/historical"
+           f"?assetclass=stocks&fromdate={START}&todate={_iso(_today())}&limit=9999")
+    j = get(url, headers={"Accept": "application/json"}).json()
+    rows = ((j.get("data") or {}).get("tradesTable") or {}).get("rows")
+    if not rows:
+        raise RuntimeError(f"nasdaq returned no rows: {str(j)[:200]}")
+    out = {}
+    for x in rows:
+        m, dd, y = x["date"].split("/")
+        d = f"{y}-{m}-{dd}"
+        if d < START:
+            continue
+        out[d] = (round(float(x["close"].lstrip("$").replace(",", "")), 4),
+                  int(x["volume"].replace(",", "")))
+    if not out:
+        raise RuntimeError("nasdaq returned nothing at or after START")
+    return out
+
+
 def fetch_sbet(ticker):
     """Yahoo Finance chart API. Returns {date: (close, volume)}.
 
     This is the JSON endpoint behind finance.yahoo.com/quote/SBET/history.
-    It is undocumented and Yahoo has changed it before; fetch_sbet_stooq is the
-    fallback. Server-side only: Yahoo does not send CORS headers.
+    It is undocumented and Yahoo has changed it before. Kept in the chain below
+    the working sources because it has answered 429 to every runner request
+    since 2026-09; it costs one pass to find out whether that has lifted.
+    Server-side only: Yahoo does not send CORS headers.
     """
     p1 = int(dt.datetime.fromisoformat(START).timestamp())
     p2 = int(time.time()) + 86400
@@ -77,7 +139,12 @@ def fetch_sbet(ticker):
 
 
 def fetch_sbet_stooq(ticker):
-    """Fallback: Stooq daily CSV. No key, no rate limit, but T+1 on some tickers."""
+    """Stooq daily CSV. No key, no rate limit, but T+1 on some tickers.
+
+    Last in the chain: stooq.com and stooq.pl both now answer a JavaScript
+    proof-of-work challenge page rather than CSV, which is what "no usable
+    rows" below means in practice.
+    """
     url = f"https://stooq.com/q/d/l/?s={ticker.lower()}.us&i=d"
     rows = list(csv.DictReader(get(url).text.splitlines()))
     if not rows or "Close" not in rows[0]:
@@ -292,14 +359,22 @@ def main():
     prev = json.loads(out_path.read_text()) if out_path.exists() else {}
     archive = {r["d"]: r for r in prev.get("series", [])}
 
-    # --- equity
-    try:
-        sbet = fetch_sbet(cfg["ticker"])
-        src_eq = "yahoo"
-    except Exception as e:
-        print(f"warn: yahoo failed ({e}); trying stooq", file=sys.stderr)
-        sbet = fetch_sbet_stooq(cfg["ticker"])
-        src_eq = "stooq"
+    # --- equity. First source that answers wins. Ordered by what actually
+    # works from a GitHub runner; yahoo and stooq stay in so the job recovers
+    # by itself if they start answering again.
+    sbet, src_eq = None, None
+    for name, fn in (("stockanalysis", fetch_sbet_stockanalysis),
+                     ("nasdaq", fetch_sbet_nasdaq),
+                     ("yahoo", fetch_sbet),
+                     ("stooq", fetch_sbet_stooq)):
+        try:
+            sbet = fn(cfg["ticker"])
+            src_eq = name
+            break
+        except Exception as e:
+            print(f"warn: {name} failed ({e})", file=sys.stderr)
+    if not sbet:
+        die("every equity source failed - see the warnings above")
 
     # --- crypto, merged over the existing archive so history outlives the API window
     eth = {d: r["eth"] for d, r in archive.items()}
