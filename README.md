@@ -14,12 +14,14 @@ All of this works in a mobile browser at github.com. Sign in first.
 3. **Add file → Create new file.** In the filename box type exactly:
    `.github/workflows/update.yml`
    (typing the slashes creates the folders). Paste the workflow YAML. Commit.
-4. **Actions tab → Refresh dashboard → Run workflow.** Watch it go green. The
-   workflow switches Pages on by itself (`configure-pages` runs with
-   `enablement: true`), so there is no Settings → Pages step to do by hand.
-5. Give Pages a minute or two to serve the first deploy. A 404 immediately after
+4. **Settings → Pages → Source: GitHub Actions.** Once, by hand. The workflow
+   asks for this over the API too (`configure-pages` with `enablement: true`),
+   but GitHub refuses that call from a workflow token, so the first time is
+   yours. The repository has to be **public** for this on a free plan.
+5. **Actions tab → Refresh dashboard → Run workflow.** Watch it go green.
+6. Give Pages a minute or two to serve the first deploy. A 404 immediately after
    the run goes green is normal.
-6. Your URL is `https://<username>.github.io/<repo>/`. Bookmark it to your
+7. Your URL is `https://<username>.github.io/<repo>/`. Bookmark it to your
    Android home screen. It refreshes itself from then on.
 
 Optional: a free CoinGecko demo key added under **Settings → Secrets and variables

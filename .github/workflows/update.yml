@@ -40,10 +40,13 @@ jobs:
           git diff --staged --quiet || git commit -m "data: $(date -u +%Y-%m-%d)"
           git push
 
-      # enablement:true turns Pages on via the API from inside the run, using the
-      # workflow's own `pages: write` permission. bootstrap.sh did this with
-      # `gh api repos/OWNER/REPO/pages`; doing it here means the repo needs no
-      # manual Settings > Pages step at all. It is a no-op once Pages is on.
+      # enablement:true asks the Pages API to create the site if it is missing.
+      # It does NOT remove the one-time setup step: the Actions GITHUB_TOKEN is
+      # refused on "create a Pages site" ("Resource not accessible by
+      # integration") even holding pages:write, on a public repo. Pages has to
+      # be switched on once by hand under Settings > Pages > Source: GitHub
+      # Actions. This stays because once the site exists the action finds it and
+      # skips creation, and it re-creates the site if Pages is ever turned off.
       - uses: actions/configure-pages@v5
         with:
           enablement: true
