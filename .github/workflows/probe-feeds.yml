@@ -1,0 +1,20 @@
+name: Probe feeds
+
+# TEMPORARY diagnostic. Probes candidate equity sources from a GitHub runner IP
+# so the choice of replacement is evidence-based rather than guessed at.
+# Delete once the equity source is settled.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Probe
+        run: python probe_feeds.py
