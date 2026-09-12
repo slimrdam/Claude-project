@@ -198,6 +198,60 @@ function drawHold() {
 const cell = (k,v,x,col) => `<div class="cell"><div class="k">${k}</div>` +
   `<div class="v"${col?` style="color:${col}"`:""}>${v}</div><div class="x">${x||""}</div></div>`;
 
+/* --- the explainer sections ------------------------------------------- */
+function card(t1, d1, col) {
+  return `<div class="panel pad-sm" style="border-left:3px solid ${col}">` +
+    `<div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:7px">${t1}</div>` +
+    `<p class="note" style="margin:0">${d1}</p></div>`;
+}
+
+function drawExplainer() {
+  const st = D.stats, cf = D.config, A = D.assumptions;
+  const mnav = st.mnav_now;
+  /* NAV per share is the whole subject of this page, so derive it rather than
+     restating mNAV: ether held x price, over the share count. */
+  const shares = cf.shares;          // compute() emits 'shares', not 'shares_outstanding'
+  const navPer = cf.eth_held * st.eth_now / shares;
+  const ethPer = cf.eth_held / shares;
+  const disc = mnav != null && mnav < 1;
+
+  $("nav").innerHTML =
+    cell(t("sb.price.per"), S.usd(st.sbet_now, 2), "SBET", C.sbet) +
+    cell(t("sb.nav.per"), S.usd(navPer, 2), t("common.live"), C.eth) +
+    cell(t("sb.eth.per"), S.num(ethPer, 5) + " ETH",
+         S.num(cf.eth_held, 0) + " ETH / " + S.num(shares / 1e6, 1) + "M") +
+    cell(t("sb.f.mnav"), S.num(mnav, 3), t("sb.mnav.d"), disc ? C.up : C.sbet);
+  $("navnote").textContent = t(disc ? "sb.nav.note.disc" : "sb.nav.note.prem",
+    {mnav: S.num(mnav, 3), pct: S.pct(mnav, 0), gap: S.pct(Math.abs(1 - mnav), 0)});
+
+  $("raise").innerHTML = ["atm","debt","pipe"].map((k, i) =>
+    card(t("sb.raise." + k + ".t"), t("sb.raise." + k + ".d"),
+         [C.eth, C.down, "var(--ink-3)"][i])).join("");
+
+  $("mech").innerHTML = [["above", C.up], ["below", C.down]].map(([k, col]) =>
+    `<div class="case" style="border-color:${col}44">` +
+    `<div class="lbl" style="color:${col}">${t("sb.mech." + k + ".t")}</div>` +
+    `<p class="note" style="margin:10px 0 0">${t("sb.mech." + k + ".d")}</p></div>`).join("");
+  $("mechnow").textContent = t(disc ? "sb.mech.now.disc" : "sb.mech.now.prem",
+    {mnav: S.num(mnav, 3)});
+
+  const yld = (A && A.allocation_example && A.allocation_example.staking_yield) || 0.025;
+  $("risk").innerHTML =
+    card(t("sb.risk.debt.t"), t("sb.risk.debt.d"), C.up) +
+    card(t("sb.risk.yield.t"), t("sb.risk.yield.d", {yield: S.pct(yld, 1)}), C.eth) +
+    card(t("sb.risk.btc.t"), t("sb.risk.btc.d"), "#f0a340");
+
+  /* company-specific claims stay editorial and carry their date */
+  const pr = D.notes && D.notes.treasury_profile;
+  $("profile").innerHTML = pr
+    ? `<div class="asof" style="margin-bottom:10px">${pr.company} · ${t("common.editorial")} · ` +
+      `${t("common.asof")} ${S.date(pr.as_of)}</div>` +
+      `<p class="note" style="margin:0 0 9px"><b>${t("sb.risk.debt.t")}.</b> ${FR()?pr.debt_fr:pr.debt}</p>` +
+      `<p class="note" style="margin:0 0 9px"><b>${t("sb.risk.yield.t")}.</b> ${FR()?pr.opex_fr:pr.opex}</p>` +
+      `<p class="note dim" style="margin:0">${FR()?pr.caveat_fr:pr.caveat}</p>`
+    : "";
+}
+
 function render() {
   if (!D) return;
   const st = D.stats, cf = D.config;
@@ -213,6 +267,7 @@ function render() {
   $("l-months").textContent = FR()
     ? "Le rendement mensuel de SBET moins celui de l'ether."
     : "SBET's monthly return minus ether's.";
+  drawExplainer();
   drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold();
 }
 Shell.onLang(render);

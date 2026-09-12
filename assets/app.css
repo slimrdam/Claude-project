@@ -230,6 +230,16 @@ tfoot td{border-top:1px solid var(--rule);border-bottom:0;color:var(--ink);font-
 .badge.warn{background:rgba(239,83,80,.14);color:#ff8a86}
 .badge.ok{background:rgba(46,194,126,.14);color:#57d79b}
 
+/* two-up comparison blocks, used by the thesis and treasury pages */
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.case{border:1px solid var(--rule);border-radius:var(--r);padding:16px;background:var(--panel)}
+.case.bull{border-color:rgba(46,194,126,.4)}
+.case .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3)}
+.case .row{display:flex;justify-content:space-between;gap:12px;margin-top:11px;font-size:14px}
+.case .row b{font-family:var(--display);font-size:19px;font-weight:600}
+@media (max-width:620px){ .cases{grid-template-columns:1fr} }
+
 /* ---------------------------------------------------------------- charts */
 svg.chart{display:block;width:100%;height:auto;overflow:visible}
 .gl{stroke:var(--rule-soft);stroke-width:1}
