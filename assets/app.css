@@ -100,13 +100,22 @@ b,strong{font-weight:600;color:var(--ink)}
   border-bottom:1px solid var(--rule);
 }
 .topbar-in{display:flex;align-items:center;gap:14px;min-height:60px}
+@media (max-width:860px){
+  .topbar-in{flex-wrap:wrap;gap:9px;min-height:0;padding-block:9px}
+  .topbar-in .navlinks{order:3;flex-basis:100%;margin-left:0}
+  .topbar-in .langsw{margin-left:auto}
+}
 .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:600;
   font-size:14.5px;color:var(--ink);white-space:nowrap;flex:none}
 .brand:hover{text-decoration:none}
 .brand .dot{width:10px;height:10px;border-radius:50%;flex:none;
   background:linear-gradient(135deg,var(--eth),var(--btc))}
 .brand .short{display:none}
-@media (max-width:1080px){ .brand .full{display:none} .brand .short{display:inline} }
+/* The full name used to be dropped below 1080px, which left a phone showing one
+   word where the app's title should be. The bar wraps to two rows instead: the
+   name and the language switch on top, the tab strip across the width below. The
+   short name is now a real title too, kept only for the narrowest screens. */
+@media (max-width:430px){ .brand .full{display:none} .brand .short{display:inline} }
 
 /* Numbered step chips. Each carries its own surface and a badge, so they read as
    controls even on the home page where the reader has not clicked anything yet. */

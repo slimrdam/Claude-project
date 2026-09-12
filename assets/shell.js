@@ -138,7 +138,17 @@ function mount(pageId) {
     '</div>';
   document.body.appendChild(foot);
 
-  /* next-part link, where the page defines one */
+  /* The tab title is part of the app's name, so it follows the language toggle
+     rather than sitting in the HTML as one fixed English string per page. */
+  const setTitle = () => {
+    const p = PAGES.filter(x => x.id === pageId)[0];
+    document.title = pageId === "home"
+      ? t("app.name") + " — " + t("home.eyebrow")
+      : t(p ? p.key : "app.name") + " — " + t("app.name");
+  };
+  setTitle();
+  root.addEventListener("langchange", setTitle);
+
   apply();
   loadData().then(d => {
     const u = document.getElementById("shell-updated");

@@ -14,7 +14,7 @@ const DICT = {
 en: {
   /* ---- shell ---------------------------------------------------------- */
   "app.name": "The debasement trade",
-  "app.short": "Debasement",
+  "app.short": "The debasement trade",
   "nav.home": "Home",
   "nav.thesis": "The case",
   "nav.allocation": "How much",
@@ -40,9 +40,9 @@ en: {
   "common.stale_market": "Some market figures are showing their previous values.",
 
   /* ---- home ----------------------------------------------------------- */
-  "home.eyebrow": "An investment thesis in five parts",
+  "home.eyebrow": "An investment thesis in six parts",
   "home.h1": "The euro has lost a third<br>of its purchasing power<br><em>since 2000.</em>",
-  "home.lede": "Five chapters, each setting out the concepts before the day-to-day figures. What holding uninvested cash costs over time. How large an investment in bitcoin and ethereum must be to improve a portfolio's return without inflating its risk. The scale of the falls on the way to the valuations in question. How market sentiment has historically related to price. And how listed companies holding crypto on their balance sheet are financed.",
+  "home.lede": "Six chapters, each setting out the concepts before the day-to-day figures. What holding uninvested cash costs over time. How large an investment in bitcoin and ethereum must be to improve a portfolio's return without inflating its risk. The scale of the falls on the way to the valuations in question. How market sentiment has historically related to price. How listed companies holding crypto on their balance sheet are financed. And one of those companies taken apart, figure by figure.",
   "home.start": "Begin \u2192",
   "home.tick.eth": "Ether",
   "home.tick.btc": "Bitcoin",
@@ -51,7 +51,7 @@ en: {
   "home.tick.infl": "Euro-area inflation",
   "home.tick.infl.sub": "{n}-year average",
   "home.tick.mnav": "SharpLink mNAV",
-  "home.parts": "The argument in five parts",
+  "home.parts": "The argument in six parts",
   "home.c1.t": "The case",
   "home.c1.d": "Prices rise faster than a savings account pays, so money held in a bank buys less each year: more than a third less than in 2000. Two assets respond to that, for different reasons. Bitcoin is capped at 21 million units, with no mechanism to create more. Ethereum is becoming the settlement layer across which banks and funds move money. Both swing sharply from year to year. Both have held value over longer periods.",
   "home.c2.t": "How much",
@@ -136,7 +136,7 @@ en: {
   "th.lgc.lede": "Plotted on a logarithmic scale, bitcoin's price has tracked a single smooth curve for fifteen years, running above it at the peak of each cycle and below it at each low. The model, known as the logarithmic growth curve, has framed every cycle since 2018. It does not predict a date or a top; it sets the band the price has kept returning to.",
   "th.lgc.cap": "The curve reaches the low hundreds of thousands towards 2030, and the band around it widens rather than narrowing. Its own annotation sets out the condition attached to it: the shape holds as long as the dollar keeps depreciating at the pace it has.",
   "th.lgc.alt": "Weekly bitcoin price from 2010 to 2026 on a logarithmic scale, with a smooth growth curve running beneath the price and extending towards 2036.",
-  "th.lgc.src": "Logarithmic growth curve model by {author}, charted on TradingView",
+  "th.lgc.src": "Logarithmic growth curve model by {author}, a trader who has framed each bitcoin cycle with it since 2018. Charted on TradingView.",
   "th.a.title": "What a small allocation would do",
   "th.a.lede": "The three largest managers hold about {aum} between them. Moving {pct} of it, the low end of what portfolio research suggests, releases {flow}. That is the order of magnitude the valuations assume, not a forecast that it happens.",
   "th.a.aum": "Managed by the three largest",
@@ -402,7 +402,7 @@ en: {
 fr: {
   /* ---- shell ---------------------------------------------------------- */
   "app.name": "Le pari sur la d\u00e9pr\u00e9ciation mon\u00e9taire",
-  "app.short": "D\u00e9pr\u00e9ciation",
+  "app.short": "La d\u00e9pr\u00e9ciation mon\u00e9taire",
   "nav.home": "Accueil",
   "nav.thesis": "La thèse",
   "nav.allocation": "Combien",
@@ -428,9 +428,9 @@ fr: {
   "common.stale_market": "Certains chiffres de march\u00e9 affichent leur valeur pr\u00e9c\u00e9dente.",
 
   /* ---- home ----------------------------------------------------------- */
-  "home.eyebrow": "Une th\u00e8se d'investissement en cinq parties",
+  "home.eyebrow": "Une th\u00e8se d'investissement en six parties",
   "home.h1": "L'euro a perdu un tiers<br>de son pouvoir d'achat<br><em>depuis 2000.</em>",
-  "home.lede": "Cinq chapitres, expliquant les concepts puis les donn\u00e9es au jour le jour. Ce que co\u00fbte dans le temps la d\u00e9tention de liquidit\u00e9s non investies. La taille qu'un investissement en bitcoin et ethereum doit atteindre pour am\u00e9liorer le rendement d'un portefeuille sans faire exploser les risques. L'ampleur des chutes sur le chemin des valorisations envisag\u00e9es. Le lien historique entre sentiment de march\u00e9 et cours. Et le financement des soci\u00e9t\u00e9s cot\u00e9es d\u00e9tenant de la crypto \u00e0 leur bilan.",
+  "home.lede": "Six chapitres, expliquant les concepts puis les donn\u00e9es au jour le jour. Ce que co\u00fbte dans le temps la d\u00e9tention de liquidit\u00e9s non investies. La taille qu'un investissement en bitcoin et ethereum doit atteindre pour am\u00e9liorer le rendement d'un portefeuille sans faire exploser les risques. L'ampleur des chutes sur le chemin des valorisations envisag\u00e9es. Le lien historique entre sentiment de march\u00e9 et cours. Le financement des soci\u00e9t\u00e9s cot\u00e9es d\u00e9tenant de la crypto \u00e0 leur bilan. Et l'une de ces soci\u00e9t\u00e9s d\u00e9cortiqu\u00e9e, chiffre par chiffre.",
   "home.start": "Commencer \u2192",
   "home.tick.eth": "Ether",
   "home.tick.btc": "Bitcoin",
@@ -439,7 +439,7 @@ fr: {
   "home.tick.infl": "Inflation zone euro",
   "home.tick.infl.sub": "moyenne {n} ans",
   "home.tick.mnav": "mNAV SharpLink",
-  "home.parts": "L'argument en cinq parties",
+  "home.parts": "L'argument en six parties",
   "home.c1.t": "La thèse",
   "home.c1.d": "Les prix montent plus vite que ne rapporte un livret : l'argent d\u00e9tenu en banque ach\u00e8te moins chaque ann\u00e9e, plus d'un tiers de moins qu'en 2000. Deux actifs y r\u00e9pondent, pour des raisons diff\u00e9rentes. Le bitcoin est plafonn\u00e9 \u00e0 21 millions d'unit\u00e9s, sans m\u00e9canisme permettant d'en cr\u00e9er davantage. Ethereum devient la couche de r\u00e8glement sur laquelle banques et fonds font circuler l'argent. Les deux varient fortement d'une ann\u00e9e \u00e0 l'autre. Les deux ont conserv\u00e9 leur valeur sur des p\u00e9riodes longues.",
   "home.c2.t": "Combien",
@@ -524,7 +524,7 @@ fr: {
   "th.lgc.lede": "Trac\u00e9 sur une \u00e9chelle logarithmique, le cours du bitcoin suit une m\u00eame courbe r\u00e9guli\u00e8re depuis quinze ans : au-dessus au sommet de chaque cycle, en dessous \u00e0 chaque creux. Ce mod\u00e8le, la courbe de croissance logarithmique, encadre tous les cycles depuis 2018. Il ne donne ni date ni sommet ; il d\u00e9limite la zone vers laquelle le cours revient.",
   "th.lgc.cap": "La courbe atteint quelques centaines de milliers de dollars vers 2030, et la zone autour d'elle s'\u00e9largit plut\u00f4t qu'elle ne se resserre. Son annotation pose elle-m\u00eame la condition : la forme tient tant que le dollar continue de se d\u00e9pr\u00e9cier au rythme observ\u00e9.",
   "th.lgc.alt": "Cours hebdomadaire du bitcoin de 2010 \u00e0 2026 sur une \u00e9chelle logarithmique, avec une courbe de croissance r\u00e9guli\u00e8re passant sous le cours et prolong\u00e9e jusqu'en 2036.",
-  "th.lgc.src": "Mod\u00e8le de courbe de croissance logarithmique de {author}, trac\u00e9 sur TradingView",
+  "th.lgc.src": "Mod\u00e8le de courbe de croissance logarithmique de {author}, un trader qui encadre avec lui chaque cycle du bitcoin depuis 2018. Trac\u00e9 sur TradingView.",
   "th.a.title": "Ce que ferait une allocation modeste",
   "th.a.lede": "Les trois plus grands g\u00e9rants d\u00e9tiennent environ {aum} \u00e0 eux trois. En d\u00e9placer {pct}, le bas de la fourchette que sugg\u00e8re la recherche de portefeuille, lib\u00e8re {flow}. C'est l'ordre de grandeur que supposent les valorisations, pas une pr\u00e9vision qu'il se produise.",
   "th.a.aum": "G\u00e9r\u00e9 par les trois plus grands",
