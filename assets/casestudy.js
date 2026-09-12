@@ -363,7 +363,7 @@ function drawHolders() {
     {top: S.pct(own.top_n_pct || 0, 0), n: hs.length,
      inst: S.pct(own.institutional_pct || 0, 0)});
   $("holderssrc").textContent =
-    t("common.editorial") + " · " + (own.source || "") +
+    t("common.editorial") + " · " + ((FR() ? own.source_fr : own.source) || "") +
     (own.as_of ? " · " + t("common.asof") + " " + S.date(own.as_of) : "");
 }
 
