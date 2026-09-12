@@ -284,12 +284,8 @@ function chrome() {
   playbook();
   ticks();
 }
-function stamp(ok) {
-  if (ok === false) { $("updated").textContent = t("se.failed"); return; }
-  lastRefresh = Date.now();
-  $("updated").textContent = t("se.updated") + " · " +
-    new Date().toLocaleTimeString(S.loc(), {hour:"2-digit", minute:"2-digit"});
-}
+/* Auto-refresh still runs; it simply is not advertised in the interface. */
+function stamp(ok) { if (ok !== false) lastRefresh = Date.now(); }
 
 /* ---------------------------------------------------------------- actions */
 async function switchAsset(key) {
@@ -347,11 +343,6 @@ $("zoomreset").onclick = () => {
 };
 $("chart").addEventListener("dblclick", () => $("zoomreset").click());
 $("refresh").onclick = () => refresh(false);
-$("auto").onclick = e => {
-  autoOn = !autoOn;
-  e.currentTarget.setAttribute("aria-pressed", String(autoOn));
-  if (autoOn) { startAuto(); refresh(false); } else stopAuto();
-};
 Shell.onLang(() => { chrome(); if (chart) chart.update("none"); });
 
 async function boot() {
