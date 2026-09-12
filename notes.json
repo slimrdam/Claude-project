@@ -173,5 +173,12 @@
       "from": "2016-09-01",
       "usd": 12
     }
+  },
+  "lgc": {
+    "_comment": "The logarithmic growth curve chart shown beside the published forecasts. A still image, not a feed: it is replaced by hand when a newer one is published. Credit and the date printed on the chart are kept here so the page states both.",
+    "as_of": "2026-08-31",
+    "author": "Dave the Wave",
+    "source": "TradingView",
+    "file": "assets/img/lgc-btc.jpg"
   }
 }
