@@ -38,7 +38,8 @@ def show(name, url, headers=None, want_json=False, dig=None):
         for kw in ("mNAV", "mnav", "NAV", "ETH Held", "ethHeld", "short interest",
                    "Short Interest", "Days to Cover", "STRC", "dividend"):
             if kw in t: print(f"    mentions {kw!r}")
-        print(f"    head: {re.sub(r'[\\n\\t ]+',' ',t[:220])!r}")
+        head = re.sub(r"\s+", " ", t[:220])
+        print("    head: " + repr(head))
         return t
     except Exception as e:
         print(f"    EXC {type(e).__name__}: {e}")
