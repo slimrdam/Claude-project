@@ -63,7 +63,10 @@
     <p class="lede" data-i18n="th.s2.lede"></p>
     <div class="strip g4" id="network" style="margin-top:16px"></div>
     <p class="note" id="netnote" style="margin-top:14px"></p>
-    <div class="grid g4" id="adoption" style="margin-top:16px"></div>
+    <h3 data-i18n="th.s2.why" style="margin-top:26px"></h3>
+    <div class="cases" id="why" style="margin-top:12px"></div>
+    <p class="note" data-i18n="th.s2.why.note" style="margin-top:14px"></p>
+    <div class="grid g4" id="adoption" style="margin-top:26px"></div>
     <p class="note" id="caveat" style="margin-top:12px"></p>
   </section>
 
@@ -172,6 +175,11 @@ function render(){
     cell(t("th.s2.price"), S.signed(st.eth_now/ATH - 1, 0),
          S.usd(st.eth_now)+" / "+S.usd(ATH), "var(--down)");
   document.getElementById("netnote").textContent = t("th.s2.note");
+
+  document.getElementById("why").innerHTML = [["btc","var(--btc)"],["eth","var(--eth)"]].map(([k,col])=>
+    `<div class="case" style="border-color:${col}33">` +
+    `<div class="lbl" style="color:${col}">${t("th.s2.why."+k+".t")}</div>` +
+    `<p class="note" style="margin:10px 0 0">${t("th.s2.why."+k+".d")}</p></div>`).join("");
 
   const ad = notes.adoption || {cards:[]};
   document.getElementById("adoption").innerHTML = (ad.cards||[]).map(c=>{
