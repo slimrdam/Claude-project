@@ -86,15 +86,6 @@ function cell(k, v, x, col){
          `<div class="x">${x||""}</div></div>`;
 }
 
-function fngColor(v){
-  const R=[[0,[255,59,78]],[25,[255,138,52]],[50,[244,208,63]],[75,[84,210,122]],[100,[16,201,95]]];
-  v=Math.max(0,Math.min(100,v));
-  let a=R[0],b=R[R.length-1];
-  for(let i=0;i<R.length-1;i++) if(v>=R[i][0]&&v<=R[i+1][0]){a=R[i];b=R[i+1];break;}
-  const f=(v-a[0])/((b[0]-a[0])||1);
-  return "rgb("+a[1].map((c,i)=>Math.round(c+(b[1][i]-c)*f)).join(",")+")";
-}
-
 let DATA = null;
 function ticks(){
   if(!DATA) return;
@@ -105,7 +96,7 @@ function ticks(){
     cell(t("home.tick.btc"),  S.usd(m.btc_usd),   S.date(DATA.series[DATA.series.length-1].d), "var(--btc)") +
     cell(t("home.tick.ratio"),S.num(st.ebtc_now,5), t("common.live")) +
     cell(t("home.tick.fng"),  fng ? fng.value : "—",
-         fng ? fng.label : "", fng ? fngColor(fng.value) : null) +
+         fng ? S.fngLabel(fng.value) : "", fng ? S.fngColor(fng.value) : null) +
     cell(t("home.tick.infl"), hicp ? S.num(hicp.annual_rate,1)+" %" : "—",
          hicp ? t("common.asof")+" "+S.date(hicp.annual_rate_date) : "") +
     cell(t("home.tick.mnav"), S.num(st.mnav_now,3),

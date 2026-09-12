@@ -140,6 +140,21 @@ function fail(el, err) {
   el.innerHTML = `<div class="banner err">${t("common.error")} — ${err && err.message ? err.message : err}</div>`;
 }
 
+/* Sentiment label and colour. Derived from the value, never from the API's own
+   value_classification, which is English only and would leak into the French UI. */
+const RAMP = [[0,[255,59,78]],[25,[255,138,52]],[50,[244,208,63]],[75,[84,210,122]],[100,[16,201,95]]];
+function fngColor(v, alpha) {
+  v = Math.max(0, Math.min(100, v));
+  let a = RAMP[0], b = RAMP[RAMP.length - 1];
+  for (let i = 0; i < RAMP.length - 1; i++)
+    if (v >= RAMP[i][0] && v <= RAMP[i+1][0]) { a = RAMP[i]; b = RAMP[i+1]; break; }
+  const f = (v - a[0]) / ((b[0] - a[0]) || 1);
+  const c = a[1].map((ch, i) => Math.round(ch + (b[1][i] - ch) * f));
+  return `rgba(${c[0]},${c[1]},${c[2]},${alpha == null ? 1 : alpha})`;
+}
+const fngLabel = v => v < 25 ? t("se.fear") : v < 45 ? t("se.fear2")
+                    : v <= 55 ? t("se.neutral") : v <= 75 ? t("se.greed2") : t("se.greed");
+
 root.Shell = { mount, onLang, loadJSON, loadData, loadScenarios, fail, PAGES,
-               usd, eur, money, num, pct, signed, big, date, loc };
+               usd, eur, money, num, pct, signed, big, date, loc, fngLabel, fngColor };
 })(window);
