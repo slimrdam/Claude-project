@@ -91,14 +91,18 @@ function ticks(){
   if(!DATA) return;
   const st = DATA.stats, m = DATA.market || {};
   const fng = m.fng, hicp = m.hicp;
+  /* multi-year average, not last month's print — see the thesis page */
+  const wins = (hicp && hicp.avg) || {};
+  const inflAvgYears = ["5","10","3"].find(k => wins[k]) || "all";
+  const inflAvg = wins[inflAvgYears];
   document.getElementById("ticks").innerHTML =
     cell(t("home.tick.eth"),  S.usd(st.eth_now),  S.date(DATA.series[DATA.series.length-1].d), "var(--eth)") +
     cell(t("home.tick.btc"),  S.usd(m.btc_usd),   S.date(DATA.series[DATA.series.length-1].d), "var(--btc)") +
     cell(t("home.tick.ratio"),S.num(st.ebtc_now,5), t("common.live")) +
     cell(t("home.tick.fng"),  fng ? fng.value : "—",
          fng ? S.fngLabel(fng.value) : "", fng ? S.fngColor(fng.value) : null) +
-    cell(t("home.tick.infl"), hicp ? S.num(hicp.annual_rate,1)+" %" : "—",
-         hicp ? t("common.asof")+" "+S.date(hicp.annual_rate_date) : "") +
+    cell(t("home.tick.infl"), inflAvg ? S.pct(inflAvg.rate,1) : "—",
+         inflAvg ? t("home.tick.infl.sub",{n:inflAvgYears}) : "") +
     cell(t("home.tick.mnav"), S.num(st.mnav_now,3),
          st.mnav_now < 1 ? t("sb.mnav.d") : "", st.mnav_now < 1 ? "var(--up)" : "var(--ink)");
 

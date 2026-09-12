@@ -51,6 +51,9 @@
     <h2 data-i18n="th.s1"></h2>
     <p class="lede" data-i18n="th.s1.lede"></p>
     <div class="strip g4" id="infl" style="margin-top:16px"></div>
+    <h3 id="h-windows" style="margin-top:26px"></h3>
+    <p class="lede" id="l-windows" style="margin-top:6px"></p>
+    <div class="panel" style="margin-top:12px"><div class="bars" id="windows"></div></div>
     <p class="note" id="inflnote" style="margin-top:14px"></p>
     <div class="panel" style="margin-top:16px"><div class="bars" id="erosion"></div></div>
   </section>
@@ -109,22 +112,45 @@ function render(){
   const m = D.market || {}, h = m.hicp, st = D.stats, notes = D.notes || {};
 
   /* --- inflation -------------------------------------------------------- */
-  const infl = h ? h.annual_rate/100 : null;
-  const real = infl != null ? SAVINGS_RATE - infl : null;
+  /* The headline is a multi-year compound average, not last month's print: over a
+     holding period that is the number that decides what cash costs you. HEADLINE_YEARS
+     picks the longest window the ECB series supports up to 10 years. */
+  const win = (h && h.avg) || {};
+  const HEADLINE = ["5","10","3"].find(k => win[k]) || "all";
+  const infl = win[HEADLINE] ? win[HEADLINE].rate : (h ? h.annual_rate/100 : null);
+  const hn = HEADLINE === "all" ? null : HEADLINE;
+  const real = infl != null ? (1+SAVINGS_RATE)/(1+infl) - 1 : null;
+
   document.getElementById("infl").innerHTML =
+    cell(hn ? t("th.s1.avg",{n:hn}) : t("th.s1.avg.all",{from:h?S.date(win.all.from):""}),
+         infl != null ? S.pct(infl,1) : "—",
+         win[HEADLINE] ? t("common.asof")+" "+S.date(h.index_date) : "", "var(--down)") +
+    cell(t("th.s1.peak"), h && h.peak_12m != null ? S.pct(h.peak_12m,1) : "—",
+         h && h.peak_12m_date ? t("th.s1.peak.x",{date:S.date(h.peak_12m_date)}) : "", "var(--warn)") +
     cell(t("th.s1.loss",{base:h?S.date(h.base_date):"2000"}),
          h ? S.pct(h.loss_since,0) : "—",
          h ? t("common.asof")+" "+S.date(h.index_date) : "", "var(--down)") +
-    cell(t("th.s1.rate"), h ? S.num(h.annual_rate,1)+" %" : "—",
-         h ? t("common.asof")+" "+S.date(h.annual_rate_date) : "") +
-    cell(t("th.s1.savings"), S.pct(SAVINGS_RATE,2), t("common.editorial")) +
-    cell(t("th.s1.gap"), real!=null ? S.signed(real,2) : "—", "", "var(--down)");
+    cell(t("th.s1.real"), real!=null ? S.signed(real,2) : "—",
+         t("th.s1.savings")+" "+S.pct(SAVINGS_RATE,2), "var(--down)");
+
+  /* every window, so nothing is being cherry-picked */
+  document.getElementById("h-windows").textContent = t("th.s1.windows");
+  document.getElementById("l-windows").textContent = t("th.s1.windows.lede");
+  const rows = [];
+  ["3","5","10"].forEach(k => { if (win[k]) rows.push([t("th.s1.win.n",{n:k}), win[k].rate]); });
+  if (win.all) rows.push([t("th.s1.win.all",{from:S.date(win.all.from)}), win.all.rate]);
+  if (h) rows.push([t("th.s1.win.latest")+" ("+S.date(h.annual_rate_date)+")", h.annual_rate/100]);
+  const top = Math.max.apply(null, rows.map(r => r[1]).concat([SAVINGS_RATE]));
+  document.getElementById("windows").innerHTML =
+    rows.map(([n,v]) => bar(n, v/top*100, S.pct(v,1),
+      v > SAVINGS_RATE ? "var(--down)" : "var(--ink-3)")).join("") +
+    bar(t("th.s1.savings"), SAVINGS_RATE/top*100, S.pct(SAVINGS_RATE,2), "var(--ink-3)");
 
   if(infl != null){
     const after = 50000 * Math.pow((1+SAVINGS_RATE)/(1+infl), 10);
     document.getElementById("inflnote").textContent =
-      t("th.s1.note",{rate:S.pct(SAVINGS_RATE,2), infl:S.num(h.annual_rate,1)+" %",
-                      result:S.eur(after)});
+      t("th.s1.note",{rate:S.pct(SAVINGS_RATE,2), infl:S.pct(infl,1),
+                      n:hn || "26", result:S.eur(after)});
     const lost = 1 - Math.pow((1+SAVINGS_RATE)/(1+infl), 10);
     document.getElementById("erosion").innerHTML =
       bar(FR()?"50 000 € aujourd'hui":"€50,000 today", 100, S.eur(50000), "var(--ink-3)") +

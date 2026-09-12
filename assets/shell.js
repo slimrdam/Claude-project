@@ -88,9 +88,11 @@ function mount(pageId) {
   nav.className = "topbar";
   nav.innerHTML =
     '<div class="wrap topbar-in">' +
-      '<a class="brand" href="index.html"><span class="dot"></span><span data-i18n="app.name"></span></a>' +
-      '<nav class="navlinks">' +
-        PAGES.filter(p => p.id !== "home").map(p =>
+      '<a class="brand" href="index.html"><span class="dot"></span>' +
+        '<span class="full" data-i18n="app.name"></span>' +
+        '<span class="short" data-i18n="app.short"></span></a>' +
+      '<nav class="navlinks" aria-label="Sections">' +
+        PAGES.map(p =>
           `<a href="${p.href}"${p.id === pageId ? ' aria-current="page"' : ""}>` +
           `<span class="n">${p.n}</span><span data-i18n="${p.key}"></span></a>`).join("") +
       '</nav>' +
@@ -100,6 +102,18 @@ function mount(pageId) {
       '</div>' +
     '</div>';
   document.body.insertBefore(nav, document.body.firstChild);
+
+  /* On a phone the strip scrolls, so bring the current chip into view — otherwise
+     the reader has to scroll sideways just to find out where they are. Sets
+     scrollLeft on the strip rather than calling scrollIntoView, which would also
+     scroll the page. */
+  const strip = nav.querySelector(".navlinks");
+  const here = strip.querySelector('a[aria-current="page"]');
+  if (here) requestAnimationFrame(() => {
+    const over = strip.scrollWidth - strip.clientWidth;
+    if (over > 1) strip.scrollLeft = Math.max(0, Math.min(over,
+      here.offsetLeft - (strip.clientWidth - here.offsetWidth) / 2));
+  });
 
   nav.querySelector(".langsw").addEventListener("click", e => {
     const b = e.target.closest("button[data-lang]");

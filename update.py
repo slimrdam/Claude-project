@@ -247,14 +247,48 @@ def fetch_eurusd():
 
 
 def fetch_hicp():
-    """Euro-area inflation: latest annual rate, and the purchasing power a euro
-    has lost since January 2000 from the index level."""
+    """Euro-area inflation, several ways.
+
+    A single latest print is the wrong statistic for a debasement argument: it
+    says what happened last month, not what holding cash costs over a holding
+    period. So this also returns trailing averages over 3, 5, 10 and 20+ years
+    computed from the index level, plus the worst 12-month rate in the last five
+    years. The page shows several side by side rather than picking one.
+    """
     per, ann = _ecb("ICP", "M.U2.N.000000.4.ANR", lastNObservations=3)[-1]
     idx = _ecb("ICP", "M.U2.N.000000.4.INX", startPeriod="2000-01")
     first, last = idx[0], idx[-1]
+
+    def avg(years):
+        months = int(years * 12)
+        if len(idx) <= months:
+            return None
+        p0, v0 = idx[-1 - months]
+        return {"rate": round((last[1] / v0) ** (1 / years) - 1, 4), "from": p0}
+
+    windows = {}
+    for y in (3, 5, 10):
+        a = avg(y)
+        if a:
+            windows[str(y)] = a
+    span_years = len(idx) / 12.0
+    windows["all"] = {"rate": round((last[1] / first[1]) ** (1 / span_years) - 1, 4),
+                      "from": first[0]}
+
+    # worst rolling 12-month rate in the last five years — the spike people
+    # actually lived through, which any trailing average smooths away
+    peak, peak_at = None, None
+    for i in range(max(12, len(idx) - 60), len(idx)):
+        r = idx[i][1] / idx[i - 12][1] - 1
+        if peak is None or r > peak:
+            peak, peak_at = r, idx[i][0]
+
     return {"annual_rate": round(ann, 2), "annual_rate_date": per,
             "loss_since": round(1 - first[1] / last[1], 4),
-            "base_date": first[0], "index_date": last[0]}
+            "base_date": first[0], "index_date": last[0],
+            "avg": windows,
+            "peak_12m": round(peak, 4) if peak is not None else None,
+            "peak_12m_date": peak_at}
 
 
 def fetch_fng():
