@@ -1,0 +1,720 @@
+{
+ "_comment": "Illustrative scenario paths, not forecasts. The 2026-09..2027-12 ETH candles are authored OHLC; everything else is a monthly close from which the page derives a deterministic candle. Live spot is drawn against these so drift from the anchor is visible rather than hidden.",
+ "authored": "2026-09-12",
+ "anchor": {
+  "eth": 2500,
+  "btc": 77400
+ },
+ "drift_warn_pct": 25,
+ "months": [
+  "2026-09",
+  "2026-10",
+  "2026-11",
+  "2026-12",
+  "2027-01",
+  "2027-02",
+  "2027-03",
+  "2027-04",
+  "2027-05",
+  "2027-06",
+  "2027-07",
+  "2027-08",
+  "2027-09",
+  "2027-10",
+  "2027-11",
+  "2027-12",
+  "2028-01",
+  "2028-02",
+  "2028-03",
+  "2028-04",
+  "2028-05",
+  "2028-06",
+  "2028-07",
+  "2028-08",
+  "2028-09",
+  "2028-10",
+  "2028-11",
+  "2028-12",
+  "2029-01",
+  "2029-02",
+  "2029-03",
+  "2029-04",
+  "2029-05",
+  "2029-06",
+  "2029-07",
+  "2029-08",
+  "2029-09",
+  "2029-10",
+  "2029-11",
+  "2029-12",
+  "2030-01",
+  "2030-02",
+  "2030-03",
+  "2030-04",
+  "2030-05",
+  "2030-06",
+  "2030-07",
+  "2030-08",
+  "2030-09",
+  "2030-10",
+  "2030-11",
+  "2030-12"
+ ],
+ "authored_ohlc_months": 16,
+ "eth": {
+  "ath": 4946,
+  "ath_note": "August 2025 all-time high",
+  "rails": [
+   [
+    3000,
+    "round",
+    "Round number and the shelf that broke on the way down."
+   ],
+   [
+    3600,
+    "supply",
+    "Top of the 2025 distribution band - the heaviest overhead supply."
+   ],
+   [
+    4100,
+    "cycle",
+    "Old 2021 cycle high. Classic breakout-retest magnet."
+   ],
+   [
+    4950,
+    "ath",
+    "All-time high. First touch almost never clears it."
+   ],
+   [
+    6000,
+    "round",
+    "First psychological level in price discovery."
+   ],
+   [
+    7500,
+    "ext",
+    "About the 1.618 extension of the 2025 range."
+   ],
+   [
+    10000,
+    "round",
+    "The biggest round number in the run, and the base-case target."
+   ],
+   [
+    12500,
+    "ext",
+    "Where late-cycle blow-offs take their last real breather."
+   ],
+   [
+    17500,
+    "ext",
+    "Second-leg extension after the 2028 unwind."
+   ],
+   [
+    25000,
+    "round",
+    "The bull-case target."
+   ]
+  ],
+  "bull": {
+   "target": 25000,
+   "ohlc": [
+    [
+     2470,
+     2760,
+     2350,
+     2680
+    ],
+    [
+     2680,
+     3180,
+     2600,
+     3060
+    ],
+    [
+     3060,
+     3620,
+     2960,
+     3450
+    ],
+    [
+     3450,
+     3700,
+     2780,
+     2920
+    ],
+    [
+     2920,
+     3320,
+     2720,
+     3260
+    ],
+    [
+     3260,
+     4180,
+     3180,
+     4060
+    ],
+    [
+     4060,
+     4950,
+     3900,
+     4550
+    ],
+    [
+     4550,
+     4700,
+     3420,
+     3680
+    ],
+    [
+     3680,
+     4420,
+     3600,
+     4320
+    ],
+    [
+     4320,
+     5650,
+     4200,
+     5480
+    ],
+    [
+     5480,
+     6950,
+     5350,
+     6750
+    ],
+    [
+     6750,
+     7600,
+     5150,
+     5720
+    ],
+    [
+     5720,
+     7350,
+     5600,
+     7180
+    ],
+    [
+     7180,
+     9900,
+     7020,
+     9650
+    ],
+    [
+     9650,
+     12400,
+     8500,
+     11700
+    ],
+    [
+     11700,
+     15400,
+     10800,
+     15000
+    ]
+   ],
+   "closes": [
+    2680,
+    3060,
+    3450,
+    2920,
+    3260,
+    4060,
+    4550,
+    3680,
+    4320,
+    5480,
+    6750,
+    5720,
+    7180,
+    9650,
+    11700,
+    15000,
+    16800,
+    14200,
+    11000,
+    9200,
+    7800,
+    8600,
+    7400,
+    6900,
+    7600,
+    8400,
+    9100,
+    9800,
+    11200,
+    10400,
+    12600,
+    14100,
+    13200,
+    15400,
+    17200,
+    16100,
+    18400,
+    20100,
+    19000,
+    21500,
+    20200,
+    22800,
+    21000,
+    23500,
+    25800,
+    24100,
+    22600,
+    24900,
+    26800,
+    25200,
+    27400,
+    25000
+   ],
+   "corr": [
+    {
+     "a": 3,
+     "b": 3,
+     "label": "December 2026",
+     "hi": 3700,
+     "lo": 2780,
+     "note": "Rejected at the 2025 supply band on the first serious attempt. This is the one that shakes out everybody who bought the breakout."
+    },
+    {
+     "a": 6,
+     "b": 7,
+     "label": "March-April 2027",
+     "hi": 4950,
+     "lo": 3420,
+     "note": "The failed first run at the all-time high. Usually the most demoralising drawdown of a cycle - price falls back to retest $3,600 as support and holds it."
+    },
+    {
+     "a": 11,
+     "b": 11,
+     "label": "August 2027",
+     "hi": 7600,
+     "lo": 5150,
+     "note": "A leverage flush in open price discovery. Violent, no obvious news attached, and largely over within weeks."
+    },
+    {
+     "a": 16,
+     "b": 23,
+     "label": "2028, the unwind",
+     "hi": 16800,
+     "lo": 6900,
+     "note": "The one that decides whether you still own any of this in 2030. Eight months, a blow-off top at $16,800 down to $6,900 - deeper than anything in 2026-27, and long enough to feel permanent."
+    }
+   ]
+  },
+  "base": {
+   "target": 10000,
+   "ohlc": [
+    [
+     2470,
+     2760,
+     2350,
+     2620
+    ],
+    [
+     2620,
+     2980,
+     2520,
+     2880
+    ],
+    [
+     2880,
+     3280,
+     2790,
+     3180
+    ],
+    [
+     3180,
+     3350,
+     2620,
+     2740
+    ],
+    [
+     2740,
+     3100,
+     2600,
+     3020
+    ],
+    [
+     3020,
+     3550,
+     2950,
+     3450
+    ],
+    [
+     3450,
+     3980,
+     3320,
+     3820
+    ],
+    [
+     3820,
+     4120,
+     3050,
+     3240
+    ],
+    [
+     3240,
+     3750,
+     3180,
+     3680
+    ],
+    [
+     3680,
+     4400,
+     3600,
+     4280
+    ],
+    [
+     4280,
+     4930,
+     4150,
+     4620
+    ],
+    [
+     4620,
+     4750,
+     3550,
+     3820
+    ],
+    [
+     3820,
+     4600,
+     3760,
+     4480
+    ],
+    [
+     4480,
+     5600,
+     4380,
+     5450
+    ],
+    [
+     5450,
+     6600,
+     5050,
+     6350
+    ],
+    [
+     6350,
+     7300,
+     5900,
+     7000
+    ]
+   ],
+   "closes": [
+    2620,
+    2880,
+    3180,
+    2740,
+    3020,
+    3450,
+    3820,
+    3240,
+    3680,
+    4280,
+    4620,
+    3820,
+    4480,
+    5450,
+    6350,
+    7000,
+    7600,
+    6800,
+    5900,
+    5100,
+    4400,
+    4800,
+    4200,
+    3900,
+    4300,
+    4700,
+    5100,
+    5400,
+    5800,
+    5500,
+    6200,
+    6800,
+    6400,
+    7100,
+    7600,
+    7200,
+    7900,
+    8400,
+    8100,
+    8800,
+    8500,
+    9100,
+    8700,
+    9400,
+    9900,
+    9500,
+    9200,
+    9700,
+    10300,
+    10000,
+    10600,
+    10000
+   ],
+   "corr": [
+    {
+     "a": 3,
+     "b": 3,
+     "label": "December 2026",
+     "hi": 3350,
+     "lo": 2620,
+     "note": "A shallower stall at $3,300 - the rally never got extended enough to need a deep one."
+    },
+    {
+     "a": 7,
+     "b": 7,
+     "label": "April 2027",
+     "hi": 4120,
+     "lo": 3050,
+     "note": "Turned away at the 2021 high. Without the momentum of the faster path, $4,100 holds as resistance for another two quarters."
+    },
+    {
+     "a": 10,
+     "b": 11,
+     "label": "July-August 2027",
+     "hi": 4930,
+     "lo": 3550,
+     "note": "Tags the all-time high to the dollar and fails. The defining event of this path: rejection here is what caps 2027 near $7,000 instead of $15,000."
+    },
+    {
+     "a": 16,
+     "b": 23,
+     "label": "2028, the unwind",
+     "hi": 7600,
+     "lo": 3900,
+     "note": "Slower and shallower than the fast path, but it lasts just as long and ends below where 2027 started."
+    }
+   ]
+  }
+ },
+ "btc": {
+  "ath": null,
+  "ath_note": "computed from the trailing price window at build time",
+  "rails": [
+   [
+    100000,
+    "round",
+    "The number that defines the last cycle. Reclaiming it is the whole first leg."
+   ],
+   [
+    125000,
+    "cycle",
+    "Prior cycle high region - the heaviest overhead supply."
+   ],
+   [
+    150000,
+    "round",
+    "First real level in price discovery."
+   ],
+   [
+    200000,
+    "round",
+    "Base-case target. A $4T market cap, about a quarter of physical gold."
+   ],
+   [
+    250000,
+    "ext",
+    "Where the 2028 unwind starts from in both paths."
+   ],
+   [
+    300000,
+    "round",
+    "ARK's bear case for 2030."
+   ],
+   [
+    400000,
+    "ext",
+    "Second-leg extension after the halving year."
+   ],
+   [
+    500000,
+    "round",
+    "Bull-case target."
+   ]
+  ],
+  "bull": {
+   "target": 500000,
+   "ohlc": [],
+   "closes": [
+    79000,
+    86000,
+    94000,
+    88000,
+    96000,
+    112000,
+    125000,
+    118000,
+    134000,
+    152000,
+    171000,
+    158000,
+    178000,
+    205000,
+    232000,
+    260000,
+    285000,
+    248000,
+    205000,
+    176000,
+    152000,
+    168000,
+    145000,
+    138000,
+    152000,
+    168000,
+    182000,
+    196000,
+    215000,
+    205000,
+    232000,
+    258000,
+    244000,
+    272000,
+    298000,
+    285000,
+    315000,
+    342000,
+    328000,
+    365000,
+    348000,
+    385000,
+    368000,
+    402000,
+    438000,
+    418000,
+    396000,
+    428000,
+    462000,
+    445000,
+    478000,
+    500000
+   ],
+   "corr": [
+    {
+     "a": 3,
+     "b": 3,
+     "label": "December 2026",
+     "hi": 88000,
+     "lo": 88000,
+     "note": "First real pause after reclaiming $90k. Shallow - the trend is not in question yet."
+    },
+    {
+     "a": 7,
+     "b": 7,
+     "label": "April 2027",
+     "hi": 118000,
+     "lo": 118000,
+     "note": "Rejection at the old cycle-high band. The level that has to break for the rest of the path to exist."
+    },
+    {
+     "a": 11,
+     "b": 11,
+     "label": "August 2027",
+     "hi": 158000,
+     "lo": 158000,
+     "note": "A leverage flush on the way into price discovery, mirroring ether's."
+    },
+    {
+     "a": 16,
+     "b": 23,
+     "label": "2028, the unwind",
+     "hi": 285000,
+     "lo": 138000,
+     "note": "Post-halving-year exhaustion: $285k down to $138k. Bitcoin's version of the drawdown that ends most people's positions."
+    }
+   ]
+  },
+  "base": {
+   "target": 200000,
+   "ohlc": [],
+   "closes": [
+    78500,
+    83000,
+    88000,
+    84000,
+    89000,
+    97000,
+    104000,
+    99000,
+    108000,
+    118000,
+    128000,
+    120000,
+    131000,
+    142000,
+    154000,
+    165000,
+    176000,
+    158000,
+    138000,
+    122000,
+    108000,
+    117000,
+    104000,
+    98000,
+    106000,
+    114000,
+    121000,
+    128000,
+    136000,
+    131000,
+    142000,
+    152000,
+    146000,
+    157000,
+    166000,
+    160000,
+    172000,
+    182000,
+    176000,
+    188000,
+    182000,
+    192000,
+    186000,
+    195000,
+    203000,
+    197000,
+    191000,
+    198000,
+    206000,
+    201000,
+    208000,
+    200000
+   ],
+   "corr": [
+    {
+     "a": 3,
+     "b": 3,
+     "label": "December 2026",
+     "hi": 84000,
+     "lo": 84000,
+     "note": "A stall below $90k. Nothing structural."
+    },
+    {
+     "a": 7,
+     "b": 7,
+     "label": "April 2027",
+     "hi": 99000,
+     "lo": 99000,
+     "note": "Turned away short of the prior cycle high, which caps the whole path lower."
+    },
+    {
+     "a": 16,
+     "b": 23,
+     "label": "2028, the unwind",
+     "hi": 176000,
+     "lo": 98000,
+     "note": "$176k to $98k. Losing the six-figure handle again is what makes this the slow path."
+    }
+   ]
+  }
+ }
+}

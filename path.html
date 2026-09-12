@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The path — the debasement trade</title>
+<meta name="theme-color" content="#0a0e17">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .corr{border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-top:12px}
+  .crow{display:grid;grid-template-columns:minmax(115px,1fr) minmax(135px,1.1fr) 84px minmax(200px,2.2fr);
+    gap:16px;align-items:start;padding:14px 16px;border-bottom:1px solid var(--rule-soft);
+    background:var(--panel);cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit;
+    border-left:0;border-right:0;border-top:0}
+  .crow:last-child{border-bottom:0}
+  .crow:hover{background:var(--panel-2)}
+  .crow[aria-pressed="true"]{background:var(--panel-2);box-shadow:inset 3px 0 0 var(--down)}
+  .crow .when{font-weight:600;font-size:13.5px;color:var(--ink)}
+  .crow .when em{display:block;font-style:normal;font-weight:400;font-size:11.5px;
+    color:var(--ink-3);margin-top:2px}
+  .crow .span{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+  .crow .drop{font-family:var(--display);font-size:18px;font-weight:600;color:var(--down)}
+  .crow .why{font-size:13px;line-height:1.5;color:var(--ink-2);margin:0;max-width:none}
+  .nextlink{display:inline-block;margin-top:34px;font-family:var(--display);font-weight:600;font-size:16px}
+  @media (max-width:820px){
+    .crow{grid-template-columns:1fr 1fr;gap:6px 14px}
+    .crow .why{grid-column:1/-1;margin-top:6px}
+    .crow .drop{text-align:right}
+  }
+</style>
+</head>
+<body>
+<main class="wrap page">
+  <p class="eyebrow" data-i18n="pa.eyebrow"></p>
+  <h1 data-i18n="pa.h1"></h1>
+  <p class="lede" id="lede"></p>
+
+  <div class="toolrow" style="margin-top:20px">
+    <div class="ctl"><span class="ctl-label" data-i18n="pa.asset"></span>
+      <div class="seg" id="assetseg" role="group">
+        <button data-a="eth" aria-pressed="true" data-i18n="common.eth"></button>
+        <button data-a="btc" aria-pressed="false" data-i18n="common.btc"></button>
+      </div></div>
+    <div class="ctl"><span class="ctl-label" data-i18n="pa.scenario"></span>
+      <div class="seg" id="caseseg" role="group">
+        <button data-k="base" aria-pressed="false"></button>
+        <button data-k="bull" aria-pressed="true"></button>
+        <button data-k="both" aria-pressed="false" data-i18n="pa.compare"></button>
+      </div></div>
+  </div>
+
+  <div id="drift"></div>
+
+  <div class="chartbox" style="margin-top:14px">
+    <div class="readout" id="readout"></div>
+    <svg id="chart" class="chart" viewBox="0 0 920 480" role="img"></svg>
+  </div>
+
+  <div class="toolrow">
+    <label class="chk"><input type="checkbox" id="tRails" checked><span data-i18n="pa.rails"></span></label>
+    <label class="chk"><input type="checkbox" id="tLog" checked><span data-i18n="pa.log"></span></label>
+    <label class="chk"><input type="checkbox" id="tSpot" checked><span data-i18n="pa.spot"></span></label>
+    <span class="asof" id="anchornote"></span>
+  </div>
+
+  <div class="strip g4" id="strip" style="margin-top:20px"></div>
+
+  <section class="sec">
+    <h2 data-i18n="pa.corr"></h2>
+    <p class="lede" data-i18n="pa.corr.lede"></p>
+    <div class="corr" id="corr"></div>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="pa.ladder"></h2>
+    <p class="lede" data-i18n="pa.ladder.lede"></p>
+    <div class="tbl-scroll" style="margin-top:12px">
+      <table><thead><tr id="lhead"></tr></thead><tbody id="ladder"></tbody></table>
+    </div>
+  </section>
+
+  <p class="note" data-i18n="pa.foot" style="margin-top:26px"></p>
+  <a class="nextlink" href="sentiment.html" data-i18n="pa.next"></a>
+</main>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/shell.js"></script>
+<script src="assets/path.js"></script>
+</body>
+</html>

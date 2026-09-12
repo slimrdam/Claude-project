@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The case — the debasement trade</title>
+<meta name="theme-color" content="#0a0e17">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  h1 em{font-style:normal;background:linear-gradient(92deg,var(--eth),#a78bfa);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .q{background:var(--panel);border:1px solid var(--rule);border-top:2px solid var(--eth);
+     border-radius:0 0 var(--r) var(--r);padding:17px}
+  .q .who{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .q .h{font-family:var(--display);font-size:15.5px;font-weight:600;margin:8px 0 7px;line-height:1.25}
+  .q p{font-size:13px;color:var(--ink-2);margin:0;max-width:none}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .br{display:grid;grid-template-columns:minmax(120px,1.1fr) 1fr 86px;gap:14px;align-items:center;font-size:13px}
+  .br .n{color:var(--ink-2)}
+  .br .t{height:10px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
+  .br .t>i{display:block;height:100%;border-radius:2px}
+  .br .v{font-family:var(--mono);font-size:12.5px;font-weight:600;text-align:right;color:var(--ink)}
+  .math{background:var(--panel-2);border:1px solid var(--rule);border-radius:var(--r);
+    padding:20px;margin:18px 0;font-family:var(--mono);font-size:13.5px;line-height:1.85}
+  .math .big{font-family:var(--display);font-size:clamp(19px,3vw,27px);font-weight:600;
+    letter-spacing:-.02em;color:var(--eth);line-height:1.25;margin-top:6px}
+  .cases{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .case{border:1px solid var(--rule);border-radius:var(--r);padding:16px;background:var(--panel)}
+  .case.bull{border-color:rgba(46,194,126,.4)}
+  .case .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .case .row{display:flex;justify-content:space-between;gap:12px;margin-top:11px;font-size:14px}
+  .case .row b{font-family:var(--display);font-size:19px;font-weight:600}
+  .nextlink{display:inline-block;margin-top:34px;font-family:var(--display);
+    font-weight:600;font-size:16px}
+  @media (max-width:620px){ .cases{grid-template-columns:1fr}
+    .br{grid-template-columns:1fr;gap:3px}.br .v{text-align:left} }
+</style>
+</head>
+<body>
+<main class="wrap page">
+  <p class="eyebrow" data-i18n="th.eyebrow"></p>
+  <h1 data-i18n-html="th.h1"></h1>
+  <p class="lede" data-i18n="th.lede"></p>
+
+  <section class="sec">
+    <h2 data-i18n="th.s1"></h2>
+    <p class="lede" data-i18n="th.s1.lede"></p>
+    <div class="strip g4" id="infl" style="margin-top:16px"></div>
+    <p class="note" id="inflnote" style="margin-top:14px"></p>
+    <div class="panel" style="margin-top:16px"><div class="bars" id="erosion"></div></div>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="th.s2"></h2>
+    <p class="lede" data-i18n="th.s2.lede"></p>
+    <div class="strip g4" id="network" style="margin-top:16px"></div>
+    <p class="note" id="netnote" style="margin-top:14px"></p>
+    <div class="grid g4" id="adoption" style="margin-top:16px"></div>
+    <p class="note" id="caveat" style="margin-top:12px"></p>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="th.s3"></h2>
+    <p class="lede" data-i18n="th.s3.lede"></p>
+    <div class="grid g3" id="quotes" style="margin-top:16px"></div>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="th.s4"></h2>
+    <p class="lede" data-i18n="th.s4.lede"></p>
+    <div class="panel" style="margin-top:16px">
+      <p class="eyebrow" data-i18n="th.s4.ratio" style="margin-bottom:14px"></p>
+      <div class="bars" id="ratio"></div>
+    </div>
+    <div class="math" id="math"></div>
+    <h3 data-i18n="th.s4.cases" style="margin-top:26px"></h3>
+    <div class="cases" id="cases"></div>
+  </section>
+
+  <a class="nextlink" href="allocation.html" data-i18n="th.next"></a>
+</main>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/shell.js"></script>
+<script>
+Shell.mount("thesis");
+const { t } = I18N, S = Shell;
+const FR = () => I18N.lang === "fr";
+let D = null;
+
+const cell = (k,v,x,col) =>
+  `<div class="cell"><div class="k">${k}</div>`+
+  `<div class="v"${col?` style="color:${col}"`:""}>${v}</div><div class="x">${x||""}</div></div>`;
+
+const bar = (name, w, val, col) =>
+  `<div class="br"><span class="n">${name}</span>`+
+  `<span class="t"><i style="width:${Math.max(2,Math.min(100,w))}%;background:${col}"></i></span>`+
+  `<span class="v">${val}</span></div>`;
+
+const SAVINGS_RATE = 0.0125;   // typical French livret, the comparison baseline
+
+function render(){
+  if(!D) return;
+  const m = D.market || {}, h = m.hicp, st = D.stats, notes = D.notes || {};
+
+  /* --- inflation -------------------------------------------------------- */
+  const infl = h ? h.annual_rate/100 : null;
+  const real = infl != null ? SAVINGS_RATE - infl : null;
+  document.getElementById("infl").innerHTML =
+    cell(t("th.s1.loss",{base:h?S.date(h.base_date):"2000"}),
+         h ? S.pct(h.loss_since,0) : "—",
+         h ? t("common.asof")+" "+S.date(h.index_date) : "", "var(--down)") +
+    cell(t("th.s1.rate"), h ? S.num(h.annual_rate,1)+" %" : "—",
+         h ? t("common.asof")+" "+S.date(h.annual_rate_date) : "") +
+    cell(t("th.s1.savings"), S.pct(SAVINGS_RATE,2), t("common.editorial")) +
+    cell(t("th.s1.gap"), real!=null ? S.signed(real,2) : "—", "", "var(--down)");
+
+  if(infl != null){
+    const after = 50000 * Math.pow((1+SAVINGS_RATE)/(1+infl), 10);
+    document.getElementById("inflnote").textContent =
+      t("th.s1.note",{rate:S.pct(SAVINGS_RATE,2), infl:S.num(h.annual_rate,1)+" %",
+                      result:S.eur(after)});
+    const lost = 1 - Math.pow((1+SAVINGS_RATE)/(1+infl), 10);
+    document.getElementById("erosion").innerHTML =
+      bar(FR()?"50 000 € aujourd'hui":"€50,000 today", 100, S.eur(50000), "var(--ink-3)") +
+      bar(FR()?"Après 10 ans sur un livret, en pouvoir d'achat":"After 10 years in a savings account, in purchasing power",
+          (1-lost)*100, S.eur(after), "var(--down)") +
+      bar(FR()?"Ce que l'inflation a pris":"What inflation took",
+          lost*100, "−"+S.eur(50000-after), "var(--warn)");
+  }
+
+  /* --- network ---------------------------------------------------------- */
+  const sc = m.stables, tv = m.tvl;
+  const ATH = 4946;   // stated in the scenario file; ether's August 2025 high
+  document.getElementById("network").innerHTML =
+    cell(t("th.s2.stables"), sc ? S.big(sc.ethereum,"USD") : "—",
+         sc ? t("th.s2.stables.x",{total:S.big(sc.total,"USD")}) : "", "var(--eth)") +
+    cell(t("th.s2.tvl"), tv ? S.big(tv.ethereum,"USD") : "—",
+         tv ? t("th.s2.tvl.x",{share:S.pct(tv.eth_share,0)}) : "", "var(--eth)") +
+    cell(t("th.s2.share"), sc ? S.pct(sc.eth_share,0) : "—", t("common.live")) +
+    cell(t("th.s2.price"), S.signed(st.eth_now/ATH - 1, 0),
+         S.usd(st.eth_now)+" / "+S.usd(ATH), "var(--down)");
+  document.getElementById("netnote").textContent = t("th.s2.note");
+
+  const ad = notes.adoption || {cards:[]};
+  document.getElementById("adoption").innerHTML = (ad.cards||[]).map(c=>{
+    const [en,fr,val,den,dfr] = c;
+    return `<div class="panel pad-sm"><div class="k" style="font-family:var(--mono);font-size:10px;`+
+      `letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)">${FR()?fr:en}</div>`+
+      `<div style="font-family:var(--display);font-size:21px;font-weight:600;margin:7px 0 5px">${val}</div>`+
+      `<div style="font-size:12px;color:var(--ink-3);line-height:1.45">${FR()?dfr:den}</div></div>`;
+  }).join("");
+  document.getElementById("caveat").innerHTML =
+    `<span class="asof">${t("common.editorial")} · ${t("common.asof")} ${S.date(ad.as_of)}</span> — `+
+    (FR()? (ad.caveat_fr||"") : (ad.caveat||""));
+
+  /* --- quotes ----------------------------------------------------------- */
+  document.getElementById("quotes").innerHTML = (notes.quotes||[]).map(q=>
+    `<div class="q"><div class="who">${FR()?q.who_fr:q.who}</div>`+
+    `<div class="h">${FR()?q.head_fr:q.head}</div>`+
+    `<p>${FR()?q.body_fr:q.body}</p></div>`).join("");
+
+  /* --- the arithmetic --------------------------------------------------- */
+  const A = D.assumptions, ref = A.ethbtc_reference, now = st.ebtc_now;
+  const scale = v => v/0.08*100;
+  document.getElementById("ratio").innerHTML =
+    bar(t("th.s4.ratio.now"), scale(now), S.num(now,4), "var(--down)") +
+    bar(t("th.s4.ratio.10y"), scale(ref.avg_10y), S.num(ref.avg_10y,3), "var(--ink-3)") +
+    bar(t("th.s4.ratio.target"), scale(ref.target), S.num(ref.target,3), "var(--eth)") +
+    bar((FR()?"Moyenne ":"Average ")+"2023", scale(ref.avg_2023), S.num(ref.avg_2023,3), "var(--ink-3)") +
+    bar((FR()?"Moyenne ":"Average ")+"2022", scale(ref.avg_2022), S.num(ref.avg_2022,3), "var(--ink-3)");
+
+  const base = A.cases.base;
+  document.getElementById("math").innerHTML =
+    `<div>${S.usd(base.btc_usd)} × ${S.num(base.ethbtc,3)}</div>`+
+    `<div class="big">= ${S.usd(base.eth_usd)} ${FR()?"par ether":"per ether"}`+
+    `<span style="color:var(--ink-3);font-size:.62em"> · ${S.num(base.eth_usd/st.eth_now,1)}×</span></div>`+
+    `<p class="note" style="font-family:var(--body);margin:14px 0 0">${
+      t("th.s4.math",{btc:S.usd(base.btc_usd), eth:S.usd(base.eth_usd)})}</p>`;
+
+  document.getElementById("cases").innerHTML = ["base","bull"].map(k=>{
+    const c = A.cases[k];
+    return `<div class="case${k==="bull"?" bull":""}">`+
+      `<div class="lbl">${t("common."+k)} · ${t("th.s4.horizon",{year:A.horizon_year})}</div>`+
+      `<div class="row"><span>${t("common.btc")}</span><b style="color:var(--btc)">${S.usd(c.btc_usd)}</b></div>`+
+      `<div class="row"><span>${t("common.eth")}</span><b style="color:var(--eth)">${S.usd(c.eth_usd)}</b></div>`+
+      `<div class="row"><span class="dim">${FR()?"depuis le cours actuel":"from spot"}</span>`+
+      `<span class="dim">${S.num(c.btc_usd/(D.market.btc_usd||1),1)}× / ${S.num(c.eth_usd/st.eth_now,1)}×</span></div>`+
+      `</div>`;
+  }).join("");
+}
+
+Shell.onLang(render);
+S.loadData().then(d=>{D=d;render();}).catch(e=>Shell.fail(document.getElementById("infl"),e));
+</script>
+</body>
+</html>

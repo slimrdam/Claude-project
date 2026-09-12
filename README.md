@@ -1,83 +1,90 @@
-# SBET vs ETH — mNAV monitor
+# The debasement trade
 
-Daily dashboard tracking SharpLink Gaming (SBET) against the ether it holds.
-Published on GitHub Pages, refreshed by GitHub Actions. **No computer required** —
-the schedule runs on GitHub's servers.
+A five-part investment thesis published as a live dashboard app on GitHub Pages.
+Every figure that can refresh itself does; everything else carries a visible date.
 
-## Setup from a phone
+**https://slimrdam.github.io/Claude-project/**
 
-All of this works in a mobile browser at github.com. Sign in first.
+## The five parts
 
-1. **New repository.** Public. Any name — it becomes part of your URL.
-2. **Add file → Upload files.** Select all five: `index.html`, `update.py`,
-   `config.json`, `notes.json`, `data.json`. Commit.
-3. **Add file → Create new file.** In the filename box type exactly:
-   `.github/workflows/update.yml`
-   (typing the slashes creates the folders). Paste the workflow YAML. Commit.
-4. **Settings → Pages → Source: GitHub Actions.** Once, by hand. The workflow
-   asks for this over the API too (`configure-pages` with `enablement: true`),
-   but GitHub refuses that call from a workflow token, so the first time is
-   yours. The repository has to be **public** for this on a free plan.
-5. **Actions tab → Refresh dashboard → Run workflow.** Watch it go green.
-6. Give Pages a minute or two to serve the first deploy. A 404 immediately after
-   the run goes green is normal.
-7. Your URL is `https://<username>.github.io/<repo>/`. Bookmark it to your
-   Android home screen. It refreshes itself from then on.
+| | Page | What it argues |
+|---|---|---|
+| 00 | `index.html` | Home. Sets the scene, live tickers, routes into the argument. |
+| 01 | `thesis.html` | The case: euro debasement against what the Ethereum network actually settles. |
+| 02 | `allocation.html` | How much. A hypothetical €100,000 portfolio, fully editable. |
+| 03 | `path.html` | The path. ETH and BTC scenario paths to December 2030, with the drawdowns. |
+| 04 | `sentiment.html` | Price against the Crypto Fear & Greed Index, daily since February 2018. |
+| 05 | `sbet.html` | SharpLink (SBET) priced against the ether on its balance sheet. |
 
-Optional: a free CoinGecko demo key added under **Settings → Secrets and variables
-→ Actions** as `COINGECKO_API_KEY` raises the rate limit. It works without one.
+Shared code lives in `assets/`: `app.css` (one dark design system), `i18n.js`
+(the full FR/EN dictionary), `shell.js` (nav, language toggle, formatting, data
+loading), and one script per page.
+
+## Language
+
+Full French/English toggle in the header, on every page, including generated
+chart labels and numbers. French is the default; the choice is remembered in the
+reader's browser. Both dictionaries are checked for key parity — a missing key
+falls back to English and logs rather than rendering blank.
+
+## Where the numbers come from
+
+**Refreshed automatically** by `update.py`, run by GitHub Actions:
+
+| Figure | Source |
+|---|---|
+| SBET daily close and volume | stockanalysis.com, Nasdaq fallback |
+| ETH and BTC daily closes | CoinGecko |
+| EUR/USD, euro-area inflation, purchasing power lost since 2000 | European Central Bank Data Portal |
+| Stablecoin float and DeFi TVL by chain | DefiLlama |
+| Fear & Greed latest reading | alternative.me |
+| Fear & Greed full history and 8 years of daily prices | fetched live in the browser on the sentiment page, refreshed every 5 minutes |
+
+The market feeds are **non-fatal**: if the ECB or DefiLlama is down, the run
+keeps the previous value, records it in `market.stale`, and the app shows a
+banner. Only the SBET and crypto price feeds can fail the job, because those are
+what the dashboard is actually for.
+
+**Maintained by hand** — no free API publishes these reliably:
+
+| File | What |
+|---|---|
+| `config.json` | SharpLink's ether held and share count, from company filings. Staleness banner after 30 days. |
+| `assumptions.json` | The canonical price targets every page reads, so they cannot drift apart. |
+| `notes.json` | Editorial: allocator quotes, adoption figures, ETH/BTC historical averages. Each block carries its own `as_of`. |
+| `scenarios.json` | The drawn scenario paths. Illustrative, not forecasts. |
+
+Do not edit `data.json` — it is generated, and it carries history further back
+than CoinGecko's free window reaches.
+
+## The scenario paths
+
+`scenarios.json` holds 52 monthly points per asset per case, September 2026 to
+December 2030. The September 2026 – December 2027 ether candles are authored
+OHLC; everything after is a monthly close from which the page derives a
+deterministic candle, so the file stays editable by hand.
+
+These are drawings, not predictions. Live spot is plotted over them and the page
+states how far price has drifted from the anchor it was drawn at. Past 25% drift
+it says so in a banner — that is the signal to re-author the early months.
 
 ## Schedule
 
-`15 22 * * 2-6` — 22:15 UTC Tuesday to Saturday, roughly two hours after the US
-close, which covers Monday through Friday sessions in US time. Cron is UTC and
-ignores daylight saving. To change it, edit the workflow file on github.com.
+`15 22 * * 2-6` — 22:15 UTC, Tuesday to Saturday. Note this is one day offset
+from the US close it is meant to follow: Monday's session is not picked up until
+Tuesday evening, and Saturday's run adds nothing. `1-5` would track the sessions
+properly.
 
-The job commits `data.json` on every run even when prices haven't moved. That is
+The job commits `data.json` on every run even when nothing moved. That is
 deliberate: GitHub disables scheduled workflows after 60 days of repository
 inactivity, and a daily commit keeps the cron alive.
 
-## What still needs you
+## Setting it up elsewhere
 
-Two numbers no free API publishes:
+1. Push these files to a **public** repository.
+2. **Settings → Pages → Source: GitHub Actions.** Once, by hand — GitHub refuses
+   the create-a-Pages-site API call from a workflow token, so `configure-pages`
+   with `enablement: true` cannot do it for you the first time.
+3. **Actions → Refresh dashboard → Run workflow.**
 
-- `eth_held` — SharpLink's ether balance
-- `shares_outstanding`
-
-They live in `config.json` with a `last_verified` date. Past `stale_after_days`,
-the page shows a red banner saying the mNAV panel is unreliable. The ratio chart
-doesn't use either number and stays valid regardless.
-
-Edit `config.json` on github.com — tap the file, tap the pencil, commit. Takes a
-minute on a phone. Check after each quarterly filing or announced raise or buyback,
-and append to `holdings_history` at the same time.
-
-`notes.json` holds the adoption figures and ETH/BTC levels. Editorial, hand-kept,
-with `as_of` dates the page prints. They will go stale; at least visibly.
-
-## Data sources
-
-| Series | Primary | Fallback |
-|---|---|---|
-| SBET daily | Yahoo Finance chart API | Stooq CSV |
-| ETH, BTC daily | CoinGecko | CoinMarketCap data API |
-
-`coinmarketcap.com/currencies/ethereum/historical-data/` cannot be scraped — it is
-JS-rendered behind Cloudflare. The CoinMarketCap fallback calls the JSON endpoint
-that page uses internally.
-
-`data.json` ships pre-seeded with 275 sessions back to August 2025, further than
-CoinGecko's free window reaches. Each run merges new data over that archive, so
-history accumulates and never shrinks.
-
-## Failure behaviour
-
-`update.py` exits non-zero — the Action goes red and you get an email — if a feed
-dies, if fewer than 30 overlapping sessions survive the merge, or if the newest
-session is more than 5 days old. A failed run leaves the previous `data.json`
-serving. If `data.json` is missing or malformed the page shows an error rather than
-a stale chart.
-
-## Running it by hand
-
-You never need to, but **Actions → Refresh dashboard → Run workflow** forces a run.
+Not investment advice. Digital assets can lose all of their value.

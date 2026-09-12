@@ -211,6 +211,108 @@ def seed_from_csv(path):
     return out
 
 
+# ---------------------------------------------------------------- market context
+#
+# Feeds for the thesis pages. All key-free and probed from a GitHub runner before
+# being wired in. Unlike the equity and crypto feeds above these are NOT fatal: a
+# DefiLlama or ECB outage must not stop the SBET dashboard from publishing, so
+# each one falls back to the value already in data.json and records how stale it is.
+
+def _ecb(flow, key, **params):
+    """ECB Data Portal (SDMX-JSON). Returns [(period, value), ...] oldest first.
+
+    Series-key length differs per dataflow (EXR has 5 dimensions, ICP 6), so the
+    single series is taken positionally rather than by a hardcoded key.
+    """
+    q = {"format": "jsondata"}
+    q.update(params)
+    url = f"https://data-api.ecb.europa.eu/service/data/{flow}/{key}?" + urllib.parse.urlencode(q)
+    j = get(url).json()
+    series = next(iter(j["dataSets"][0]["series"].values()))["observations"]
+    periods = [v["id"] for v in j["structure"]["dimensions"]["observation"][0]["values"]]
+    out = []
+    for i, per in enumerate(periods):
+        obs = series.get(str(i))
+        if obs and obs[0] is not None:
+            out.append((per, float(obs[0])))
+    if not out:
+        raise RuntimeError(f"ECB {flow}/{key} returned no observations")
+    return out
+
+
+def fetch_eurusd():
+    """US dollars per euro, ECB daily reference rate."""
+    per, val = _ecb("EXR", "D.USD.EUR.SP00.A", lastNObservations=5)[-1]
+    return {"rate": round(val, 4), "date": per}
+
+
+def fetch_hicp():
+    """Euro-area inflation: latest annual rate, and the purchasing power a euro
+    has lost since January 2000 from the index level."""
+    per, ann = _ecb("ICP", "M.U2.N.000000.4.ANR", lastNObservations=3)[-1]
+    idx = _ecb("ICP", "M.U2.N.000000.4.INX", startPeriod="2000-01")
+    first, last = idx[0], idx[-1]
+    return {"annual_rate": round(ann, 2), "annual_rate_date": per,
+            "loss_since": round(1 - first[1] / last[1], 4),
+            "base_date": first[0], "index_date": last[0]}
+
+
+def fetch_fng():
+    """Crypto Fear & Greed, latest reading only. The sentiment page pulls the full
+    daily history itself, client side, so it stays live between workflow runs."""
+    j = get("https://api.alternative.me/fng/?limit=1&format=json").json()
+    d = j["data"][0]
+    return {"value": int(d["value"]), "label": d["value_classification"],
+            "date": _iso(dt.datetime.utcfromtimestamp(int(d["timestamp"])).date())}
+
+
+def fetch_stables():
+    """Stablecoin float by chain, DefiLlama."""
+    j = get("https://stablecoins.llama.fi/stablecoinchains").json()
+    tot = {}
+    for c in j:
+        v = (c.get("totalCirculatingUSD") or {}).get("peggedUSD") or 0
+        if v:
+            tot[c["name"]] = float(v)
+    if not tot:
+        raise RuntimeError("defillama returned no stablecoin chains")
+    total = sum(tot.values())
+    eth = tot.get("Ethereum", 0)
+    return {"ethereum": round(eth / 1e9, 1), "total": round(total / 1e9, 1),
+            "eth_share": round(eth / total, 4)}
+
+
+def fetch_tvl():
+    """Value locked in DeFi by chain, DefiLlama."""
+    j = get("https://api.llama.fi/v2/chains").json()
+    tot = {c["name"]: float(c["tvl"]) for c in j if c.get("tvl")}
+    if not tot:
+        raise RuntimeError("defillama returned no chain TVL")
+    total = sum(tot.values())
+    eth = tot.get("Ethereum", 0)
+    return {"ethereum": round(eth / 1e9, 1), "total": round(total / 1e9, 1),
+            "eth_share": round(eth / total, 4)}
+
+
+def build_market(prev, eth_now, btc_now, ethbtc):
+    """Assemble the market block, keeping the last good value for anything that fails."""
+    old = prev.get("market", {})
+    out = {"as_of": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+           "eth_usd": eth_now, "btc_usd": btc_now, "ethbtc": ethbtc, "stale": []}
+    for name, fn in (("eurusd", fetch_eurusd), ("hicp", fetch_hicp), ("fng", fetch_fng),
+                     ("stables", fetch_stables), ("tvl", fetch_tvl)):
+        try:
+            out[name] = fn()
+        except Exception as e:
+            print(f"warn: market feed {name} failed ({e})", file=sys.stderr)
+            if name in old:
+                out[name] = old[name]
+                out["stale"].append(name)
+            else:
+                out[name] = None
+    return out
+
+
 # ---------------------------------------------------------------- compute
 
 def month_key(d):
@@ -398,10 +500,21 @@ def main():
         die(f"latest overlapping session is {latest}, {lag} days old - feed looks broken")
 
     data = compute(sbet, eth, btc, cfg)
+    r_last = data["series"][-1]
+    data["market"] = build_market(
+        prev, r_last["eth"],
+        round(r_last["eth"] / r_last["eb"], 2) if r_last.get("eb") else None,
+        r_last.get("eb"))
+    data["assumptions"] = json.loads((ROOT / "assumptions.json").read_text())
     s = data["stats"]
     print(f"  ratio {s['ri_now']} (low {s['low_ri']} on {s['low_d']}, "
           f"prior tops {s['prior_tops']}) | mNAV {s['mnav_now']} | "
           f"{s['green']}/{s['sessions']} green ({s['green_pct']}%)")
+    mk = data["market"]
+    print(f"  market: eur/usd {mk.get('eurusd')} | fng {mk.get('fng')} | "
+          f"stables {mk.get('stables')} | tvl {mk.get('tvl')}")
+    if mk["stale"]:
+        print(f"  WARNING: reused previous values for {', '.join(mk['stale'])}")
     if data["config"]["stale"]:
         print(f"  WARNING: eth_held / shares last verified "
               f"{data['config']['stale_days']}d ago - update config.json")

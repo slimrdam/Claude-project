@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentiment — the debasement trade</title>
+<meta name="theme-color" content="#0a0e17">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  h1 em{font-style:normal;background:linear-gradient(92deg,var(--fear),var(--fear-2) 26%,
+    var(--neutral) 50%,var(--greed-2) 74%,var(--greed));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .chart-box{position:relative;height:min(60vh,520px);min-height:360px;touch-action:pan-y}
+  canvas{display:block}
+  .wtag{position:absolute;top:14px;left:14px;z-index:2;pointer-events:none;
+    font-family:var(--mono);font-size:11px;color:var(--ink-3);
+    background:rgba(10,14,23,.72);border:1px solid var(--rule-soft);padding:5px 9px;border-radius:6px}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:14px;text-align:center;padding:24px;
+    background:rgba(10,14,23,.6);backdrop-filter:blur(2px);z-index:3;border-radius:var(--r)}
+  .overlay.hidden{display:none}
+  .pulse{width:11px;height:11px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(139,155,255,.45)}
+    70%{box-shadow:0 0 0 14px rgba(139,155,255,0)}100%{box-shadow:0 0 0 0 rgba(139,155,255,0)}}
+  .overlay .msg{color:var(--ink-2);font-size:14px;max-width:44ch}
+  .spectrum{width:74px;height:8px;border-radius:5px;
+    background:linear-gradient(90deg,var(--fear),var(--fear-2),var(--neutral),var(--greed-2),var(--greed))}
+  .scaleword{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-3)}
+  .iconbtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+    border-radius:8px;background:var(--panel);border:1px solid var(--rule);color:var(--ink-2);cursor:pointer}
+  .iconbtn:hover{color:var(--ink);border-color:var(--accent)}
+  .iconbtn svg{width:16px;height:16px}
+  .iconbtn.spin svg{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .autobtn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;
+    color:var(--ink-2);background:var(--panel);border:1px solid var(--rule);height:36px;
+    padding:0 13px;border-radius:8px;cursor:pointer}
+  .autobtn[aria-pressed="true"]{color:var(--ink);border-color:var(--rule)}
+  .livedot{width:8px;height:8px;border-radius:50%;background:#3c4560}
+  .autobtn[aria-pressed="true"] .livedot{background:var(--greed)}
+  .nextlink{display:inline-block;margin-top:34px;font-family:var(--display);font-weight:600;font-size:16px}
+</style>
+</head>
+<body class="has-glow">
+<main class="wrap page">
+  <p class="eyebrow spectrum" data-i18n="se.eyebrow"></p>
+  <h1 id="h1"></h1>
+  <p class="lede" data-i18n="se.lede"></p>
+
+  <div class="toolrow">
+    <div class="seg" id="assetseg" role="group">
+      <button data-asset="ETH" aria-pressed="true" data-i18n="common.eth"></button>
+      <button data-asset="BTC" aria-pressed="false" data-i18n="common.btc"></button>
+    </div>
+  </div>
+
+  <div class="strip g4" id="ticks" style="margin-top:16px"></div>
+
+  <div class="toolrow" style="justify-content:space-between">
+    <div class="ctl">
+      <span class="ctl-label" data-i18n="se.window"></span>
+      <div class="seg" id="rangeseg" role="group">
+        <button data-range="all" aria-pressed="true" data-i18n="se.all"></button>
+        <button data-range="3y">3Y</button><button data-range="1y">1Y</button>
+        <button data-range="6m">6M</button><button data-range="3m">3M</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" data-i18n="se.axis"></span>
+      <div class="seg" id="scaleseg" role="group">
+        <button data-scale="logarithmic" aria-pressed="true" data-i18n="se.log"></button>
+        <button data-scale="linear" data-i18n="se.linear"></button>
+      </div>
+    </div>
+    <div class="ctl">
+      <div class="seg" role="group">
+        <button id="zoomout" aria-label="Zoom out">−</button>
+        <button id="zoomin" aria-label="Zoom in">+</button>
+        <button id="zoomreset" disabled data-i18n="se.reset"></button>
+      </div>
+      <span class="asof" id="updated">—</span>
+      <button class="autobtn" id="auto" aria-pressed="true"><span class="livedot"></span><span data-i18n="se.auto"></span></button>
+      <button class="iconbtn" id="refresh" data-i18n-aria="se.refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="chartbox" style="margin-top:12px">
+    <div class="chart-box">
+      <span class="wtag" id="wtag"></span>
+      <canvas id="chart"></canvas>
+      <div class="overlay" id="overlay"><div class="pulse"></div><div class="msg" id="omsg"></div></div>
+    </div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <p class="note" id="hint" style="margin-top:12px"></p>
+  <p class="note" data-i18n="se.note" style="margin-top:18px"></p>
+
+  <a class="nextlink" href="sbet.html" data-i18n="se.next"></a>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/shell.js"></script>
+<script src="assets/sentiment.js"></script>
+</body>
+</html>
