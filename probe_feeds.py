@@ -1,71 +1,65 @@
 #!/usr/bin/env python3
-"""Probe the three requested sources, and robust alternatives for the same figures.
-
-Requested: SharpLink's own dashboard (mNAV), Strategy's STRC page (price),
-Fintel (SBET short interest). All three are likely JS-rendered or bot-guarded,
-so this reports exactly what a server can see, and checks whether the same
-numbers are available from sources already trusted by update.py.
-"""
+"""Probe 2: locate mNAV and treasury figures inside SharpLink's Nuxt payload,
+and confirm the replacement sources for the two blocked pages."""
 import json, re, requests
 
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/125.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9"}
+                    "(KHTML, like Gecko) Chrome/125.0 Safari/537.36"}
 
-def show(name, url, headers=None, want_json=False, dig=None):
-    print(f"\n=== {name}\n    {url}")
+print("########## SharpLink dashboard payload")
+t = requests.get("https://www.sharplink.com/dashboard", headers=UA, timeout=40).text
+print(f"  html {len(t)} bytes")
+
+# Nuxt 3 ships a flat JSON array in a script tag; Nuxt 2 ships an IIFE.
+m = re.search(r'<script[^>]+id="__NUXT_DATA__"[^>]*>(.*?)</script>', t, re.S)
+print("  __NUXT_DATA__ script:", "found" if m else "absent")
+if m:
     try:
-        r = requests.get(url, headers=headers or UA, timeout=30)
-        ct = r.headers.get("content-type", "")[:48]
-        print(f"    HTTP {r.status_code}  len={len(r.content)}  ct={ct}")
-        srv = r.headers.get("server", "")
-        cf  = r.headers.get("cf-mitigated") or r.headers.get("cf-ray")
-        if srv or cf: print(f"    server={srv!r} cf={cf!r}")
-        if r.status_code != 200:
-            print(f"    body: {r.text[:200]!r}"); return None
-        if want_json:
-            j = r.json()
-            print(f"    dug: {str(dig(j) if dig else j)[:300]}")
-            return j
-        t = r.text
-        # is the payload actually rendered, or an empty app shell?
-        for marker in ("__NEXT_DATA__", "__NUXT__", "window.__INITIAL", "application/ld+json",
-                       "self.__next_f"):
-            if marker in t: print(f"    embeds {marker}")
-        nums = re.findall(r'\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b|\bmNAV\b|\b\d\.\d{2,4}\b', t)
-        print(f"    numeric-looking tokens: {len(nums)}  sample={nums[:8]}")
-        for kw in ("mNAV", "mnav", "NAV", "ETH Held", "ethHeld", "short interest",
-                   "Short Interest", "Days to Cover", "STRC", "dividend"):
-            if kw in t: print(f"    mentions {kw!r}")
-        head = re.sub(r"\s+", " ", t[:220])
-        print("    head: " + repr(head))
-        return t
+        arr = json.loads(m.group(1))
+        print(f"  payload is {type(arr).__name__} of {len(arr)} entries")
+        # in the flat format, strings and numbers sit in one array; find labels
+        strs = [(i, v) for i, v in enumerate(arr) if isinstance(v, str)]
+        keys = [(i, v) for i, v in strs
+                if re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_]{1,28}', v or "")
+                and re.search(r'nav|eth|share|hold|price|stak|supply|treasur|mnav|outstand',
+                              v, re.I)]
+        print(f"  {len(keys)} label-ish strings matched:")
+        for i, v in keys[:40]:
+            nxt = arr[i+1] if i+1 < len(arr) else None
+            print(f"      [{i}] {v!r} -> {str(nxt)[:60]!r}")
     except Exception as e:
-        print(f"    EXC {type(e).__name__}: {e}")
-        return None
+        print("  parse failed:", e)
 
-print("########## 1. requested sources")
-show("SharpLink dashboard", "https://www.sharplink.com/dashboard")
-show("SharpLink root",      "https://www.sharplink.com/")
-show("Strategy STRC",       "https://www.strategy.com/strc")
-show("Fintel SBET short",   "https://fintel.io/ss/us/sbet")
-show("robots.txt fintel",   "https://fintel.io/robots.txt")
-show("robots.txt sharplink","https://www.sharplink.com/robots.txt")
-show("robots.txt strategy", "https://www.strategy.com/robots.txt")
+# whatever the format, find the numbers printed next to the mNAV label
+for label in ("mNAV", "mnav", "ETH Held", "Ether Held", "Shares Outstanding", "NAV"):
+    for mm in re.finditer(re.escape(label), t):
+        seg = t[max(0, mm.start()-160): mm.start()+220]
+        seg = re.sub(r"\s+", " ", seg)
+        print(f"\n  context for {label!r}:\n      ...{seg}...")
+        break
 
-print("\n########## 2. alternatives already trusted by update.py")
-show("stockanalysis STRC quote",
-     "https://stockanalysis.com/api/symbol/s/STRC/history?range=1M&period=Daily",
-     want_json=True, dig=lambda j: (j.get("status"), (j.get("data") or [])[:2]))
-show("nasdaq STRC",
-     "https://api.nasdaq.com/api/quote/STRC/info?assetclass=stocks",
-     headers={**UA, "Accept": "application/json"}, want_json=True,
-     dig=lambda j: ((j.get("data") or {}).get("primaryData")))
-show("nasdaq SBET short interest",
-     "https://api.nasdaq.com/api/quote/SBET/short-interest?assetclass=stocks",
-     headers={**UA, "Accept": "application/json"}, want_json=True,
-     dig=lambda j: str(j)[:400])
-show("stockanalysis SBET statistics",
-     "https://stockanalysis.com/api/symbol/s/SBET/overview",
-     want_json=True, dig=lambda j: str(j)[:400])
+print("\n########## replacements for the two blocked pages")
+r = requests.get("https://api.nasdaq.com/api/quote/SBET/short-interest?assetclass=stocks",
+                 headers={**UA, "Accept": "application/json"}, timeout=30)
+j = r.json()
+rows = (((j.get("data") or {}).get("shortInterestTable") or {}).get("rows") or [])
+print(f"  nasdaq short interest: {len(rows)} rows")
+for row in rows[:4]:
+    print("     ", row)
+
+for path, label in (("summary", "SBET summary (float?)"), ("info", "SBET info")):
+    try:
+        jj = requests.get(f"https://api.nasdaq.com/api/quote/SBET/{path}?assetclass=stocks",
+                          headers={**UA, "Accept": "application/json"}, timeout=30).json()
+        d = (jj.get("data") or {}).get("summaryData") or (jj.get("data") or {})
+        ks = [k for k in (d or {}) if re.search(r'share|float|outstand|cap', k, re.I)]
+        print(f"  {label}: keys={ks}")
+        for k in ks:
+            print(f"     {k} = {d[k]}")
+    except Exception as e:
+        print(f"  {label}: EXC {e}")
+
+jj = requests.get("https://stockanalysis.com/api/symbol/s/STRC/history?range=1M&period=Daily",
+                  headers=UA, timeout=30).json()
+last = (jj.get("data") or [])[0]
+print(f"  STRC latest close: {last}")
