@@ -2,7 +2,7 @@ name: Refresh dashboard
 
 on:
   schedule:
-    - cron: "15 22 * * 2-6"   # 22:15 UTC Tue-Sat, ~2h after the US close
+    - cron: "15 22 * * 1-5"   # 22:15 UTC Mon-Fri, ~2h after the US close
   workflow_dispatch:
   # A content change has to be published to be visible, and only this workflow
   # deploys. data.json is excluded so the commit below cannot re-trigger the run

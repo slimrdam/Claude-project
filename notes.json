@@ -180,5 +180,75 @@
     "author": "@davethewave",
     "source": "TradingView",
     "file": "assets/img/lgc-btc.jpg"
+  },
+  "ownership": {
+    "_comment": "Who owns the shares, and the denominator the short interest is read against. The short interest itself refreshes from the FINRA settlement series; only the float it is divided by is kept here, because it barely moves and no free feed publishes it. Float is derived from a published reading of short interest as a share of float (21% against 35.0M shares short at the 31 Aug 2026 settlement), which puts the float near 167M of the 217M shares outstanding. Holder positions are the last reported 13F figures; percentages are of shares outstanding. Replace by hand when new filings land.",
+    "as_of": "2026-08-31",
+    "source": "13F filings and the FINRA short-interest settlement",
+    "float_shares": 167000000,
+    "institutional_pct": 0.6,
+    "top_n_pct": 0.484,
+    "holders": [
+      {
+        "name": "FMR / Fidelity",
+        "shares": 27590000,
+        "pct": 0.133,
+        "kind": "passive"
+      },
+      {
+        "name": "Highbridge Capital",
+        "shares": 24370000,
+        "pct": 0.099,
+        "kind": "quant"
+      },
+      {
+        "name": "BlackRock",
+        "shares": 16140000,
+        "pct": 0.076,
+        "kind": "passive"
+      },
+      {
+        "name": "Consensys",
+        "shares": 10100000,
+        "pct": 0.043,
+        "kind": "strategic"
+      },
+      {
+        "name": "Renaissance Technologies",
+        "shares": 5840000,
+        "pct": 0.027,
+        "kind": "quant"
+      },
+      {
+        "name": "Geode Capital Management",
+        "shares": 5470000,
+        "pct": 0.026,
+        "kind": "passive"
+      },
+      {
+        "name": "UBS Group",
+        "shares": 4700000,
+        "pct": 0.022,
+        "kind": "passive"
+      },
+      {
+        "name": "Invesco",
+        "shares": 4430000,
+        "pct": 0.021,
+        "kind": "passive"
+      },
+      {
+        "name": "Citadel Advisors",
+        "shares": 4150000,
+        "pct": 0.02,
+        "kind": "quant"
+      },
+      {
+        "name": "State Street",
+        "shares": 3650000,
+        "pct": 0.017,
+        "kind": "passive"
+      }
+    ]
   }
 }

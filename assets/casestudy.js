@@ -237,13 +237,29 @@ function drawStrc() {
 function drawShort() {
   const sh = (D.market || {}).short, cf = D.config;
   if (!sh) { $("short").innerHTML = ""; $("shortchart").innerHTML = ""; return; }
+  const own = (D.notes && D.notes.ownership) || {};
   const pct = cf.shares ? sh.interest / cf.shares : null;
+  /* The share that matters is of the float, not of every share issued: the
+     shares held strategically are not available to be borrowed. */
+  const fl = own.float_shares ? sh.interest / own.float_shares : null;
   $("short").innerHTML =
     cell(t("sb.short.n"), S.num(sh.interest / 1e6, 1) + "M",
          t("sb.short.settle", {date: S.date(sh.settlement)}), C.down) +
+    cell(t("sb.short.float"), fl == null ? "—" : S.pct(fl, 0),
+         t("sb.short.float.x", {n: S.num(own.float_shares / 1e6, 0) + "M"}), C.down) +
     cell(t("sb.short.pct"), pct == null ? "—" : S.pct(pct, 1),
-         S.num(cf.shares / 1e6, 0) + "M " + t("sb.short.pct").toLowerCase()) +
+         t("sb.short.pct.x", {n: S.num(cf.shares / 1e6, 0) + "M"})) +
     cell(t("sb.short.days"), S.num(sh.days_to_cover, 1), t("sb.short.days.x"));
+
+  /* the two readings of a large short position, side by side */
+  $("sq").innerHTML = [["hedge", C.eth], ["squeeze", C.up]].map(([k, col]) =>
+    `<div class="case" style="border-color:${col}44">` +
+    `<div class="lbl" style="color:${col}">${t("cs.sq." + k + ".t")}</div>` +
+    `<p class="note" style="margin:10px 0 0">${t("cs.sq." + k + ".d")}</p></div>`).join("");
+
+  $("shortread").textContent = fl == null ? "" : t("sb.short.read",
+    {float: S.pct(fl, 0), inst: S.pct(own.institutional_pct || 0, 0),
+     days: S.num(sh.days_to_cover, 1)});
 
   const h = sh.history || [];
   if (h.length < 3) { $("shortchart").innerHTML = ""; return; }
@@ -326,9 +342,34 @@ function drawFigs() {
   $("l-months").textContent = t("sb.s.months.lede");
 }
 
+/* Who owns the shares. 13F positions move once a quarter, so they are editorial
+   and dated; the bars are drawn to the largest holder so the shape is readable
+   rather than ten near-identical stubs. */
+function drawHolders() {
+  const own = (D.notes && D.notes.ownership) || {};
+  const hs = own.holders || [];
+  if (!hs.length) { $("holders").innerHTML = ""; $("holdersnote").textContent = ""; return; }
+  const KIND = {passive: C.eth, quant: C.sbet, strategic: "var(--ink-3)"};
+  const max = Math.max.apply(null, hs.map(h => h.pct));
+  $("holders").innerHTML = hs.map(h =>
+    `<div class="br"><span class="n">${h.name}</span>` +
+    `<span class="t"><i style="width:${(h.pct / max * 100).toFixed(1)}%;` +
+      `background:${KIND[h.kind] || "var(--ink-3)"}"></i></span>` +
+    `<span class="v">${S.pct(h.pct, 1)}</span></div>`).join("");
+  $("holderskey").innerHTML = ["passive","quant","strategic"].map(k =>
+    `<span class="lg"><span class="dash" style="background:${KIND[k]}"></span>` +
+    `${t("cs.own." + k)}</span>`).join("");
+  $("holdersnote").textContent = t("cs.own.note",
+    {top: S.pct(own.top_n_pct || 0, 0), n: hs.length,
+     inst: S.pct(own.institutional_pct || 0, 0)});
+  $("holderssrc").textContent =
+    t("common.editorial") + " · " + (own.source || "") +
+    (own.as_of ? " · " + t("common.asof") + " " + S.date(own.as_of) : "");
+}
+
 function render() {
   if (!D) return;
-  drawFigs(); drawCompany(); drawStrc(); drawShort();
+  drawFigs(); drawCompany(); drawStrc(); drawHolders(); drawShort();
   drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold(); drawTable();
 }
 Shell.onLang(render);

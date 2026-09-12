@@ -18,19 +18,12 @@
     text-transform:uppercase;color:var(--ink-3)}
   .q .h{font-family:var(--display);font-size:15.5px;font-weight:600;margin:8px 0 7px;line-height:1.25}
   .q p{font-size:13px;color:var(--ink-2);margin:0;max-width:none}
-  .bars{display:flex;flex-direction:column;gap:9px}
-  .br{display:grid;grid-template-columns:minmax(120px,1.1fr) 1fr 86px;gap:14px;align-items:center;font-size:13px}
-  .br .n{color:var(--ink-2)}
-  .br .t{height:10px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
-  .br .t>i{display:block;height:100%;border-radius:2px}
-  .br .v{font-family:var(--mono);font-size:12.5px;font-weight:600;text-align:right;color:var(--ink)}
   .math{background:var(--panel-2);border:1px solid var(--rule);border-radius:var(--r);
     padding:20px;margin:18px 0;font-family:var(--mono);font-size:13.5px;line-height:1.85}
   .math .big{font-family:var(--display);font-size:clamp(19px,3vw,27px);font-weight:600;
     letter-spacing:-.02em;color:var(--eth);line-height:1.25;margin-top:6px}
   .nextlink{display:inline-block;margin-top:34px;font-family:var(--display);
     font-weight:600;font-size:16px}
-  @media (max-width:620px){ .br{grid-template-columns:1fr;gap:3px}.br .v{text-align:left} }
 
   /* A chart that only makes its point when the axis labels are legible, so the
      thumbnail opens full-screen rather than trying to carry the detail inline. */

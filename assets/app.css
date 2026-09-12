@@ -297,3 +297,13 @@ footer.app a{color:var(--ink-2)}
   color:var(--ink-3);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;
   margin-left:5px;vertical-align:1px}
 @media (max-width:420px){ .linked{grid-template-columns:1fr} }
+
+/* Ranked bars. Used for the ETH/BTC ratio levels on part one and the
+   institutional holders on part six. */
+.bars{display:flex;flex-direction:column;gap:9px}
+.br{display:grid;grid-template-columns:minmax(120px,1.1fr) 1fr 86px;gap:14px;align-items:center;font-size:13px}
+.br .n{color:var(--ink-2)}
+.br .t{height:10px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
+.br .t>i{display:block;height:100%;border-radius:2px}
+.br .v{font-family:var(--mono);font-size:12.5px;font-weight:600;text-align:right;color:var(--ink)}
+@media (max-width:620px){ .br{grid-template-columns:1fr;gap:3px}.br .v{text-align:left} }
