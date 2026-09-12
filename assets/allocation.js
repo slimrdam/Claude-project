@@ -163,23 +163,18 @@ function render() {
     `<span><i style="background:${COLORS[p.id]}"></i>${t(LABELS[p.id])} ${p.amount?S.eur(p.amount):"—"}` +
     (p.monthly ? ` <span class="dim">+${S.eur(p.monthly)}/${FR()?"mois":"mo"}</span>` : "") + `</span>`).join("");
 
-  /* capital inputs */
-  $("capinputs").innerHTML = P.positions.map((p, i) =>
-    `<div class="inp"><label for="cap${i}">${t(LABELS[p.id])}</label>` +
-    `<input type="number" id="cap${i}" data-i="${i}" class="capin" min="0" step="1000" value="${p.amount}"></div>`
-  ).join("") +
-    `<div class="inp"><label for="mon">${t("al.monthly")}</label>` +
-    `<input type="number" id="mon" min="0" step="25" value="${monthlyIn()}"></div>`;
-  document.querySelectorAll(".capin").forEach(el => el.addEventListener("input", e => {
-    P.positions[+e.target.dataset.i].amount = Math.max(0, +e.target.value || 0);
-    save(); render();
-  }));
-  $("mon").addEventListener("input", e => {
-    const v = Math.max(0, +e.target.value || 0), old = monthlyIn() || 1;
-    P.positions.forEach(p => { if (p.monthly) p.monthly = Math.round(p.monthly / old * v); });
-    if (!monthlyIn() && v) P.positions[1].monthly = v;
-    save(); render();
+  /* capital inputs: labels are re-translated, values are only pushed into fields
+     the reader is not currently typing in — rebuilding them on every keystroke is
+     what limited entry to a single character */
+  buildInputs();
+  syncInput("mon", monthlyIn());
+  P.positions.forEach((p, i) => syncInput("cap" + i, p.amount));
+  P.positions.forEach((p, i) => {
+    const l = document.querySelector(`label[for="cap${i}"]`);
+    if (l) l.textContent = t(LABELS[p.id]);
   });
+  const ml = document.querySelector('label[for="mon"]');
+  if (ml) ml.textContent = t("al.monthly");
 
   /* scenario */
   $("scenario").querySelectorAll("button").forEach(b => {
@@ -231,58 +226,7 @@ function render() {
   $("presetnote").textContent = t("al.preset.d",
     {btc:S.usd(A.cases.bull.btc_usd), eth:S.usd(A.cases.bull.eth_usd), year:A.horizon_year});
 
-  ["eth","btc"].forEach(w => {
-    const g = w === "eth" ? ge : gb, col = w === "eth" ? "var(--eth)" : "var(--btc)";
-    const sp = spot(w), end = shownTarget(w);
-    const idx = P.positions.findIndex(p => p.kind === w);
-    const byTarget = P[w + "Mode"] !== "growth";
-    $(w+"panel").innerHTML =
-      `<div class="ctl" style="justify-content:space-between;margin-bottom:12px">` +
-        `<span class="ctl-label">${t("al.case.load")}</span>` +
-        `<div class="seg" data-case="${w}">` +
-          `<button data-k="base">${t("common.base")}</button>` +
-          `<button data-k="bull">${t("common.bull")}</button>` +
-        `</div></div>` +
-
-      `<div class="linked">` +
-        `<div class="inp"><label for="${w}T">${t("al.target",{asset:t("common."+w)})}` +
-          (byTarget ? "" : ` <span class="drv">${t("al.derived")}</span>`) + `</label>` +
-          `<input type="number" id="${w}T" value="${Math.round(end)}" min="1" step="${w==="eth"?100:1000}"></div>` +
-        `<div class="inp"><label for="${w}S">${t("al.spot")}</label>` +
-          `<input type="number" id="${w}S" value="${Math.round(sp)}" min="1" step="${w==="eth"?10:500}"></div>` +
-      `</div>` +
-
-      `<div class="field" style="margin-top:14px"><label for="${w}G">` +
-        `<span>${t("al.growth."+w)}` +
-        (byTarget ? ` <span class="drv">${t("al.derived")}</span>` : "") + `</span>` +
-        `<b style="color:${col}">${S.signed(g,1)}</b></label>` +
-      `<input type="range" id="${w}G" min="-40" max="120" step="0.5" value="${(Math.max(-40,Math.min(120,g*100))).toFixed(1)}">` +
-      `<div class="ticks2"><span>−40 %</span><span>0 %</span><span>+120 %</span></div></div>` +
-
-      `<p class="note dim" style="margin:8px 0 0;font-size:12px">${
-        t(byTarget ? "al.link.target" : "al.link.growth", {years: t("al.years.v",{n:years})})}</p>` +
-
-      `<div class="proj"><div class="from">${t("al.proj.one",{asset:t("common."+w),years:t("al.years.v",{n:years})})}</div>` +
-      `<div class="price" style="color:${col}">${S.eur(end)}</div>` +
-      `<div class="row"><span>${t("al.proj.spot")}</span><b>${S.eur(sp)}</b></div>` +
-      `<div class="row"><span>${t("al.proj.hold")}</span><b>${S.num(act.finals[idx]/end,4)} ${w.toUpperCase()}</b></div>` +
-      `<div class="row"><span>${t("al.proj.worth")}</span><b>${S.eur(act.finals[idx])}</b></div></div>`;
-
-    $(w+"T").addEventListener("input", e => {
-      P[w+"Target"] = Math.max(1, +e.target.value || 1); P[w+"Mode"] = "target"; save(); render();
-    });
-    $(w+"G").addEventListener("input", e => {
-      P[w+"Growth"] = +e.target.value/100; P[w+"Mode"] = "growth"; save(); render();
-    });
-    $(w+"S").addEventListener("input", e => {
-      P[w+"Spot"] = Math.max(1, +e.target.value||1); save(); render();
-    });
-    $(w+"panel").querySelector("[data-case]").addEventListener("click", e => {
-      const b = e.target.closest("button[data-k]"); if (!b) return;
-      P[w+"Target"] = Math.round(caseTarget(w, b.dataset.k));
-      P[w+"Mode"] = "target"; save(); render();
-    });
-  });
+  ["eth","btc"].forEach(w => paintAsset(w, w === "eth" ? ge : gb, act));
 
   /* downside */
   const cryptoNow = P.positions.filter(p => p.kind).reduce((s,p)=>s+p.amount,0);
@@ -303,6 +247,107 @@ function render() {
 
   $("savedmsg").textContent = edited ? t("al.saved") : "";
 }
+
+/* Inputs live for the life of the page. Only their values are synced, and only
+   when they are not focused, so typing is never interrupted. */
+let built = false;
+function syncInput(id, value) {
+  const el = $(id);
+  if (el && document.activeElement !== el && String(el.value) !== String(value)) el.value = value;
+}
+
+function buildInputs() {
+  if (built) return;
+  built = true;
+
+  $("capinputs").innerHTML = P.positions.map((p, i) =>
+    `<div class="inp"><label for="cap${i}"></label>` +
+    `<input type="number" id="cap${i}" data-i="${i}" class="capin" min="0" step="1000"></div>`
+  ).join("") +
+    `<div class="inp"><label for="mon"></label>` +
+    `<input type="number" id="mon" min="0" step="25"></div>`;
+
+  document.querySelectorAll(".capin").forEach(el => el.addEventListener("input", e => {
+    P.positions[+e.target.dataset.i].amount = Math.max(0, +e.target.value || 0);
+    save(); render();
+  }));
+  $("mon").addEventListener("input", e => {
+    const v = Math.max(0, +e.target.value || 0), prev = monthlyIn() || 1;
+    P.positions.forEach(p => { if (p.monthly) p.monthly = Math.round(p.monthly / prev * v); });
+    if (!monthlyIn() && v) P.positions[1].monthly = v;
+    save(); render();
+  });
+
+  ["eth","btc"].forEach(w => {
+    const col = w === "eth" ? "var(--eth)" : "var(--btc)";
+    $(w+"panel").innerHTML =
+      `<div class="ctl" style="justify-content:space-between;margin-bottom:12px">` +
+        `<span class="ctl-label" id="${w}CaseLbl"></span>` +
+        `<div class="seg" data-case="${w}">` +
+          `<button data-k="base"></button><button data-k="bull"></button>` +
+        `</div></div>` +
+      `<div class="linked">` +
+        `<div class="inp"><label for="${w}T" id="${w}TLbl"></label>` +
+          `<input type="number" id="${w}T" min="1" step="${w==="eth"?100:1000}"></div>` +
+        `<div class="inp"><label for="${w}S" id="${w}SLbl"></label>` +
+          `<input type="number" id="${w}S" min="1" step="${w==="eth"?10:500}"></div>` +
+      `</div>` +
+      `<div class="field" style="margin-top:14px"><label for="${w}G">` +
+        `<span id="${w}GLbl"></span><b id="${w}GVal" style="color:${col}"></b></label>` +
+      `<input type="range" id="${w}G" min="-40" max="120" step="0.5">` +
+      `<div class="ticks2"><span>−40 %</span><span>0 %</span><span>+120 %</span></div></div>` +
+      `<p class="note dim" id="${w}Link" style="margin:8px 0 0;font-size:12px"></p>` +
+      `<div class="proj"><div class="from" id="${w}From"></div>` +
+      `<div class="price" id="${w}Price" style="color:${col}"></div>` +
+      `<div class="row"><span id="${w}L1"></span><b id="${w}V1"></b></div>` +
+      `<div class="row"><span id="${w}L2"></span><b id="${w}V2"></b></div>` +
+      `<div class="row"><span id="${w}L3"></span><b id="${w}V3"></b></div></div>`;
+
+    $(w+"T").addEventListener("input", e => {
+      P[w+"Target"] = Math.max(1, +e.target.value || 1); P[w+"Mode"] = "target"; save(); render();
+    });
+    $(w+"G").addEventListener("input", e => {
+      P[w+"Growth"] = +e.target.value/100; P[w+"Mode"] = "growth"; save(); render();
+    });
+    $(w+"S").addEventListener("input", e => {
+      P[w+"Spot"] = Math.max(1, +e.target.value||1); save(); render();
+    });
+    $(w+"panel").querySelector("[data-case]").addEventListener("click", e => {
+      const b = e.target.closest("button[data-k]"); if (!b) return;
+      P[w+"Target"] = Math.round(caseTarget(w, b.dataset.k));
+      P[w+"Mode"] = "target"; save(); render();
+    });
+  });
+}
+
+function paintAsset(w, g, act) {
+  const years = P.years, sp = spot(w), end = shownTarget(w);
+  const idx = P.positions.findIndex(p => p.kind === w);
+  const byTarget = P[w + "Mode"] !== "growth";
+  const drv = ` <span class="drv">${t("al.derived")}</span>`;
+
+  $(w+"CaseLbl").textContent = t("al.case.load");
+  $(w+"panel").querySelectorAll("[data-case] button").forEach(b =>
+    b.textContent = t("common." + b.dataset.k));
+  $(w+"TLbl").innerHTML = t("al.target", {asset: t("common."+w)}) + (byTarget ? "" : drv);
+  $(w+"SLbl").textContent = t("al.spot");
+  $(w+"GLbl").innerHTML = t("al.growth."+w) + (byTarget ? drv : "");
+  $(w+"GVal").textContent = S.signed(g, 1);
+  $(w+"Link").textContent = t(byTarget ? "al.link.target" : "al.link.growth",
+                              {years: t("al.years.v", {n: years})});
+  $(w+"From").textContent = t("al.proj.one",
+    {asset: t("common."+w), years: t("al.years.v", {n: years})});
+  $(w+"Price").textContent = S.eur(end);
+  $(w+"L1").textContent = t("al.proj.spot");  $(w+"V1").textContent = S.eur(sp);
+  $(w+"L2").textContent = t("al.proj.hold");
+  $(w+"V2").textContent = S.num(act.finals[idx] / end, 4) + " " + w.toUpperCase();
+  $(w+"L3").textContent = t("al.proj.worth"); $(w+"V3").textContent = S.eur(act.finals[idx]);
+
+  syncInput(w+"T", Math.round(end));
+  syncInput(w+"S", Math.round(sp));
+  syncInput(w+"G", Math.max(-40, Math.min(120, g*100)).toFixed(1));
+}
+
 
 /* ---------------------------------------------------------------- wiring */
 $("scenario").addEventListener("click", e => {
