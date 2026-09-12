@@ -4,6 +4,14 @@ on:
   schedule:
     - cron: "15 22 * * 2-6"   # 22:15 UTC Tue-Sat, ~2h after the US close
   workflow_dispatch:
+  # A content change has to be published to be visible, and only this workflow
+  # deploys. data.json is excluded so the commit below cannot re-trigger the run
+  # that made it.
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data.json"
+      - "README.md"
 
 permissions:
   contents: write
