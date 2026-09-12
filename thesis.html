@@ -113,8 +113,11 @@ function render(){
   if(!D) return;
 
   /* --- vocabulary, before anything that uses it --------------------------- */
-  document.getElementById("words").innerHTML = [1,2,3,4,5,6].map(i =>
-    `<div class="panel pad-sm"><div style="font-family:var(--display);font-size:15px;` +
+  /* six terms in the grid, then the consequence of the last two across its full
+     width, since it is what they add up to rather than a seventh definition */
+  document.getElementById("words").innerHTML = [1,2,3,4,5,6,7].map(i =>
+    `<div class="panel pad-sm"${i === 7 ? ' style="grid-column:1/-1"' : ""}>` +
+    `<div style="font-family:var(--display);font-size:15px;` +
     `font-weight:600;margin-bottom:6px">${t("th.w"+i+".t")}</div>` +
     `<p class="note" style="margin:0">${t("th.w"+i+".d")}</p></div>`).join("");
 
