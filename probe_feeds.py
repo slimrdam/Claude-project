@@ -1,38 +1,64 @@
 #!/usr/bin/env python3
-"""Probe 3: extract the figure cards from SharpLink's server-rendered dashboard."""
-import re, requests, html as ihtml
+"""Probe 4: the dashboard fills its figures in client-side, so render it in a real
+browser and capture which requests supply the numbers. If a clean JSON endpoint
+exists, update.py can call that directly and skip the browser entirely."""
+import json, re
+from playwright.sync_api import sync_playwright
 
-UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/125.0 Safari/537.36"}
-t = requests.get("https://www.sharplink.com/dashboard", headers=UA, timeout=40).text
-print(f"html {len(t)} bytes")
+calls = []
+with sync_playwright() as pw:
+    b = pw.chromium.launch()
+    pg = b.new_page()
 
-def text(frag):
-    frag = re.sub(r"<(script|style|svg)[^>]*>.*?</\1>", " ", frag, flags=re.S|re.I)
-    frag = re.sub(r"<[^>]+>", "\x00", frag)
-    parts = [ihtml.unescape(p).strip() for p in frag.split("\x00")]
-    return [p for p in parts if p]
+    def on_resp(r):
+        try:
+            ct = (r.headers or {}).get("content-type", "")
+            if "json" in ct and "sharplink" not in r.url.split("/")[2:3][0:1] or True:
+                calls.append((r.status, ct[:30], r.url))
+        except Exception:
+            pass
+    pg.on("response", on_resp)
 
-# every <h3 class="title">…</h3> heads a figure card; take the text that follows it
-print("\n--- cards by <h3 class=\"title\">")
-for m in re.finditer(r'<h3 class="title"[^>]*>(.*?)</h3>', t, re.S):
-    label = " ".join(text(m.group(1)))
-    after = t[m.end(): m.end() + 1400]
-    # stop at the next card so values do not bleed across
-    after = re.split(r'<h3 class="title"', after)[0]
-    vals = [p for p in text(after) if re.search(r'\d', p)]
-    print(f"  {label:34} -> {vals[:6]}")
+    pg.goto("https://www.sharplink.com/dashboard", wait_until="networkidle", timeout=60000)
+    pg.wait_for_timeout(3000)
 
-print("\n--- any element whose class mentions value/figure/number")
-seen = set()
-for m in re.finditer(r'<(\w+)[^>]*class="([^"]*(?:value|figure|number|amount|stat)[^"]*)"[^>]*>(.*?)</\1>', t, re.S):
-    cls, inner = m.group(2), " ".join(text(m.group(3)))
-    if inner and re.search(r'\d', inner) and (cls, inner) not in seen:
-        seen.add((cls, inner))
-        print(f"  .{cls[:38]:38} {inner[:46]!r}")
-    if len(seen) > 25: break
+    print("########## JSON responses the page fetched")
+    seen = set()
+    for status, ct, url in calls:
+        if "json" not in ct: continue
+        if url in seen: continue
+        seen.add(url)
+        print(f"  {status} {ct:24} {url[:150]}")
 
-print("\n--- date stamps on the page")
-for pat in (r'as of[^<]{0,60}', r'[A-Z][a-z]{2}\s+\d{1,2},\s+20\d\d', r'\d{1,2}/\d{1,2}/20\d\d'):
-    hits = re.findall(pat, t, re.I)
-    if hits: print(f"  {pat[:24]}: {sorted(set(hits))[:6]}")
+    print("\n########## rendered figure cards")
+    cards = pg.evaluate("""() => {
+        const out = [];
+        document.querySelectorAll('h3.title').forEach(h => {
+            const card = h.closest('[class*=card]') || h.parentElement.parentElement;
+            if (!card) return;
+            const txt = card.innerText.split('\\n').map(s => s.trim()).filter(Boolean);
+            out.push(txt.slice(0, 6));
+        });
+        return out;
+    }""")
+    for c in cards: print("   ", c)
+
+    print("\n########## anything that still looks like an unfilled template")
+    left = pg.evaluate("() => (document.body.innerText.match(/\\{\\{[^}]+\\}\\}/g) || []).slice(0,10)")
+    print("   ", left or "none")
+    b.close()
+
+print("\n########## pick out the most promising endpoint")
+import requests
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36"}
+for status, ct, url in calls:
+    if "json" not in ct or status != 200: continue
+    if not re.search(r'dashboard|treasur|eth|nav|metric|stat|holding', url, re.I): continue
+    try:
+        j = requests.get(url, headers=UA, timeout=30).json()
+        s = json.dumps(j)
+        if re.search(r'mnav|nav|holding|eth', s, re.I):
+            print(f"\n  {url[:140]}\n     keys={list(j)[:14] if isinstance(j,dict) else type(j).__name__}")
+            print(f"     {s[:420]}")
+    except Exception as e:
+        print(f"  {url[:90]} -> EXC {e}")
