@@ -277,6 +277,68 @@ function drawTable() {
   }).join("");
 }
 
+/* --- the company's own published figures, STRC and short interest --------- */
+function drawCompany() {
+  const m = D.market || {}, sl = m.sharplink;
+  if (!sl) return;
+  const src = t("sb.src.company") + (sl.as_of ? " · " + sl.as_of : "");
+  $("nav").insertAdjacentHTML("beforeend",
+    cell(t("sb.f.navps"), S.usd(sl.nav_per_share, 2), src, C.eth) +
+    cell(t("sb.f.conc"), S.num(sl.eth_concentration, 2) + " ETH", src) +
+    cell(t("sb.f.fdmnav"), S.num(sl.fd_mnav, 2), src) +
+    cell(t("sb.f.rewards"), S.num(sl.staking_rewards, 0) + " ETH", src, C.up));
+
+  /* the published mNAV and the ETH-only series will not match exactly; say why */
+  const calc = D.stats.mnav_now;
+  if (sl.mnav != null && calc != null) {
+    $("navnote").insertAdjacentHTML("beforeend",
+      `<br><span class="dim">${t("sb.mnav.gap", {pub: S.num(sl.mnav, 2), calc: S.num(calc, 3)})}</span>`);
+  }
+}
+
+function drawStrc() {
+  const st = (D.market || {}).strc;
+  if (!st) { $("strc").innerHTML = ""; return; }
+  const ch = st.change_pct;
+  $("strc").innerHTML =
+    cell(t("sb.strc.price"), S.usd(st.price, 2), S.date(st.date),
+         ch == null ? "" : (ch >= 0 ? C.up : C.down)) +
+    cell(t("common.spot"), ch == null ? "—" : S.signed(ch / 100, 2),
+         S.date(st.date), ch >= 0 ? C.up : C.down);
+}
+
+function drawShort() {
+  const sh = (D.market || {}).short, cf = D.config;
+  if (!sh) { $("short").innerHTML = ""; $("shortchart").innerHTML = ""; return; }
+  const pct = cf.shares ? sh.interest / cf.shares : null;
+  $("short").innerHTML =
+    cell(t("sb.short.n"), S.num(sh.interest / 1e6, 1) + "M",
+         t("sb.short.settle", {date: S.date(sh.settlement)}), C.down) +
+    cell(t("sb.short.pct"), pct == null ? "—" : S.pct(pct, 1),
+         S.num(cf.shares / 1e6, 0) + "M " + t("sb.short.pct").toLowerCase()) +
+    cell(t("sb.short.days"), S.num(sh.days_to_cover, 1), t("sb.short.days.x"));
+
+  const h = sh.history || [];
+  if (h.length < 3) { $("shortchart").innerHTML = ""; return; }
+  const f = frame(920, 200, {l: 56, r: 14, t: 14, b: 34});
+  const vals = h.map(r => r.interest);
+  const lo = Math.min.apply(null, vals) * 0.9, hi = Math.max.apply(null, vals) * 1.05;
+  const X = i => f.L + i / (h.length - 1) * f.iw;
+  const Y = v => f.T + f.ih - (v - lo) / (hi - lo) * f.ih;
+  let g = axisY(f, lo, hi, v => S.num(v / 1e6, 0) + "M", 3);
+  const bw = Math.max(f.iw / h.length * 0.55, 2);
+  h.forEach((r, i) => {
+    const y = Y(r.interest);
+    g += `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" ` +
+         `height="${Math.max(f.T + f.ih - y, 1).toFixed(1)}" fill="${C.down}" opacity=".55" rx="1">` +
+         `<title>${S.date(r.date)}: ${S.num(r.interest, 0)}</title></rect>`;
+    if (i % Math.ceil(h.length / 6) === 0)
+      g += `<text class="axis" x="${X(i).toFixed(1)}" y="${(f.h - 10).toFixed(1)}" ` +
+           `text-anchor="middle">${S.date(r.date)}</text>`;
+  });
+  $("shortchart").innerHTML = g;
+}
+
 function render() {
   if (!D) return;
   const st = D.stats, cf = D.config;
@@ -292,7 +354,7 @@ function render() {
   $("l-months").textContent = FR()
     ? "Le rendement mensuel de SBET moins celui de l'ether."
     : "SBET's monthly return minus ether's.";
-  drawExplainer(); drawTwo();
+  drawExplainer(); drawCompany(); drawStrc(); drawTwo(); drawShort();
   drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold(); drawTable();
 }
 Shell.onLang(render);
