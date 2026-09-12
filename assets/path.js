@@ -28,6 +28,11 @@ function hash(s) {
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
   return ((h >>> 0) % 1000) / 1000;
 }
+/* scenario copy is authored in the JSON, English first with a French twin beside
+   it: *_fr on the objects, a fourth element on the rails */
+const fr2 = (o, key) => (FR() && o[key + "_fr"]) || o[key];
+const railWhy = r => (FR() && r[3]) || r[2];
+
 function candles(a, k) {
   const p = SC[a][k];
   if (p._c) return p._c;
@@ -86,7 +91,7 @@ function draw() {
 
   /* rails */
   SC[asset].rails.forEach(r => {
-    const [p, kind, why] = r, y = scale(p);
+    const [p, kind] = r, y = scale(p);
     if (y < M.t || y > M.t + PH) return;
     /* rails off still leaves a plain gridline, so the price axis stays readable */
     svg.appendChild(el("line", {x1:M.l, y1:y, x2:M.l+PW, y2:y,
@@ -221,11 +226,11 @@ function corrections() {
   $("corr").innerHTML = ks.map(k => SC[asset][k].corr.map((c,i) => {
     const pc = (1-c.lo/c.hi)*100, on = sel && sel.k===k && sel.i===i;
     return `<button class="crow" data-k="${k}" data-i="${i}" aria-pressed="${on}">` +
-      `<span class="when">${c.label}<em${mode==="both"?` style="color:${CASE[k]}"`:""}>` +
+      `<span class="when">${fr2(c, "label")}<em${mode==="both"?` style="color:${CASE[k]}"`:""}>` +
       `${mode==="both"?t("common."+k):monthLabel(c.a)+(c.b!==c.a?" – "+monthLabel(c.b):"")}</em></span>` +
       `<span class="span">${money(c.hi)} → ${money(c.lo)}</span>` +
       `<span class="drop">−${S.num(pc,1)} %</span>` +
-      `<p class="why">${c.note}</p></button>`;
+      `<p class="why">${fr2(c, "note")}</p></button>`;
   }).join("")).join("");
   $("corr").querySelectorAll(".crow").forEach(b => b.onclick = () => {
     const k = b.dataset.k, i = +b.dataset.i;
@@ -239,12 +244,13 @@ function ladder() {
     `<th style="text-align:left">${t("pa.ladder.when")}</th>`;
   const ks = mode === "both" ? ["base","bull"] : [mode];
   $("ladder").innerHTML = SC[asset].rails.map(r => {
-    const [p, kind, why] = r;
+    const [p, kind] = r, why = railWhy(r);
     const cleared = ks.map(k => {
       const idx = candles(asset,k).findIndex(d => d[3] > p);
       return idx >= 0 ? monthLabel(idx) : t("pa.never");
     });
-    return `<tr><td style="${kind==="ath"?"color:#c99a3c":""}">${money(p)}${kind==="ath"?" — ATH":""}</td>` +
+    return `<tr><td style="${kind==="ath"?"color:#c99a3c":""}">${money(p)}` +
+      `${kind==="ath"?(FR()?" — record":" — ATH"):""}</td>` +
       `<td style="text-align:left">${why}</td>` +
       `<td style="text-align:left" class="mono">${ks.map((k,i)=>
         mode==="both" ? `<span style="color:${CASE[k]}">${cleared[i]}</span>` : cleared[i]).join(" / ")}</td></tr>`;

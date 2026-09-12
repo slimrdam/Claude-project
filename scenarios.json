@@ -1,5 +1,5 @@
 {
- "_comment": "Illustrative scenario paths, not forecasts. The 2026-09 to 2027-12 ETH candles are authored OHLC; everything else is a monthly close from which the page derives a deterministic candle. Live spot is drawn against these so drift from the anchor is visible rather than hidden.",
+ "_comment": "Illustrative scenario paths, not forecasts. The 2026-09 to 2027-12 ETH candles are authored OHLC; everything else is a monthly close from which the page derives a deterministic candle. Live spot is drawn against these so drift from the anchor is visible rather than hidden. French copy sits in *_fr fields and in a fourth element on each rail.",
  "authored": "2026-09-12",
  "anchor": {
   "eth": 2500,
@@ -68,52 +68,62 @@
    [
     3000,
     "round",
-    "Round number and the shelf that broke on the way down."
+    "Round number and the shelf that broke on the way down.",
+    "Chiffre rond, et le palier qui a cédé à la baisse."
    ],
    [
     3600,
     "supply",
-    "Top of the 2025 distribution band — the heaviest overhead supply."
+    "Top of the 2025 distribution band — the heaviest overhead supply.",
+    "Haut de la bande de distribution de 2025 — la résistance la plus lourde."
    ],
    [
     4100,
     "cycle",
-    "Old 2021 cycle high. Classic breakout-retest magnet."
+    "Old 2021 cycle high. Classic breakout-retest magnet.",
+    "Ancien sommet du cycle 2021. Aimant classique pour un retest après cassure."
    ],
    [
     4950,
     "ath",
-    "All-time high. First touch almost never clears it."
+    "All-time high. First touch almost never clears it.",
+    "Record historique. Une première touche le franchit rarement."
    ],
    [
     6000,
     "round",
-    "First psychological level in price discovery."
+    "First psychological level in price discovery.",
+    "Premier seuil psychologique en découverte de prix."
    ],
    [
     7500,
     "ext",
-    "About the 1.618 extension of the 2025 range."
+    "About the 1.618 extension of the 2025 range.",
+    "Environ l'extension 1,618 de l'amplitude de 2025."
    ],
    [
     10000,
     "round",
-    "The biggest round number in the run."
+    "The biggest round number in the run.",
+    "Le plus gros chiffre rond du parcours."
    ],
    [
     12500,
     "round",
-    "Conservative-case target."
+    "Conservative-case target.",
+    "Objectif du scénario conservateur."
    ],
    [
     17500,
     "ext",
-    "Second-leg extension after the 2028 unwind."
+    "Second-leg extension after the 2028 unwind.",
+    "Extension de la deuxième jambe après le reflux de 2028."
    ],
    [
     25000,
     "round",
-    "Optimistic-case target."
+    "Optimistic-case target.",
+    "Objectif du scénario optimiste."
    ]
   ],
   "bull": {
@@ -277,7 +287,9 @@
      "label": "December 2026",
      "hi": 3700,
      "lo": 2780,
-     "note": "Rejected at the 2025 supply band on the first serious attempt. This is the one that shakes out everybody who bought the breakout."
+     "note": "Rejected at the 2025 supply band on the first serious attempt. This is the one that shakes out everybody who bought the breakout.",
+     "label_fr": "Décembre 2026",
+     "note_fr": "Rejeté sur la bande de distribution de 2025 dès la première vraie tentative. C'est celle qui fait sortir tous ceux qui ont acheté la cassure."
     },
     {
      "a": 6,
@@ -285,7 +297,9 @@
      "label": "March-April 2027",
      "hi": 4950,
      "lo": 3420,
-     "note": "The failed first run at the all-time high. Usually the most demoralising drawdown of a cycle - price falls back to retest $3,600 as support and holds it."
+     "note": "The failed first run at the all-time high. Usually the most demoralising drawdown of a cycle — price falls back to retest $3,600 as support and holds it.",
+     "label_fr": "Mars-avril 2027",
+     "note_fr": "La première attaque du record échoue. C'est en général la baisse la plus démoralisante d'un cycle : le cours revient tester 3 600 $ en soutien, et ce niveau tient."
     },
     {
      "a": 11,
@@ -293,7 +307,9 @@
      "label": "August 2027",
      "hi": 7600,
      "lo": 5150,
-     "note": "A leverage flush in open price discovery. Violent, no obvious news attached, and largely over within weeks."
+     "note": "A leverage flush in open price discovery. Violent, no obvious news attached, and largely over within weeks.",
+     "label_fr": "Août 2027",
+     "note_fr": "Une purge des positions à effet de levier en pleine découverte de prix. Violente, sans nouvelle particulière, et réglée en quelques semaines."
     },
     {
      "a": 16,
@@ -301,7 +317,9 @@
      "label": "2028, the unwind",
      "hi": 16800,
      "lo": 6900,
-     "note": "The one that decides whether you still own any of this in 2030. Eight months, a blow-off top at $16,800 down to $6,900 - deeper than anything in 2026-27, and long enough to feel permanent."
+     "note": "The one that decides whether you still own any of this in 2030. Eight months, a blow-off top at $16,800 down to $6,900 — deeper than anything in 2026-27, and long enough to feel permanent.",
+     "label_fr": "2028, le reflux",
+     "note_fr": "Celle qui décide si vous détenez encore quelque chose en 2030. Huit mois, d'un sommet d'euphorie à 16 800 $ jusqu'à 6 900 $ : plus profonde que tout ce que 2026-27 a connu, et assez longue pour sembler définitive."
     }
    ]
   },
@@ -466,7 +484,9 @@
      "label": "December 2026",
      "hi": 3350,
      "lo": 2620,
-     "note": "A shallower stall at $3,300 - the rally never got extended enough to need a deep one."
+     "note": "A shallower stall at $3,300 — the rally never got extended enough to need a deep one.",
+     "label_fr": "Décembre 2026",
+     "note_fr": "Un palier moins marqué à 3 300 $ : la hausse n'était pas assez tendue pour appeler une correction profonde."
     },
     {
      "a": 7,
@@ -474,7 +494,9 @@
      "label": "April 2027",
      "hi": 4120,
      "lo": 3050,
-     "note": "Turned away at the 2021 high. Without the momentum of the faster path, $4,100 holds as resistance for another two quarters."
+     "note": "Turned away at the 2021 high. Without the momentum of the faster path, $4,100 holds as resistance for another two quarters.",
+     "label_fr": "Avril 2027",
+     "note_fr": "Repoussé au sommet de 2021. Sans l'élan de la trajectoire rapide, 4 100 $ reste une résistance deux trimestres de plus."
     },
     {
      "a": 10,
@@ -482,7 +504,9 @@
      "label": "July-August 2027",
      "hi": 4930,
      "lo": 3550,
-     "note": "Tags the all-time high to the dollar and fails. The defining event of this path: rejection here is what caps 2027 near $7,000 instead of $15,000."
+     "note": "Tags the all-time high to the dollar and fails. The defining event of this path: rejection here is what caps 2027 near $7,000 instead of $15,000.",
+     "label_fr": "Juillet-août 2027",
+     "note_fr": "Touche le record au dollar près et échoue. L'événement décisif de cette trajectoire : ce refus est ce qui plafonne 2027 vers 7 000 $ au lieu de 15 000 $."
     },
     {
      "a": 16,
@@ -490,10 +514,13 @@
      "label": "2028, the unwind",
      "hi": 7653,
      "lo": 4117,
-     "note": "Slower and shallower than the fast path, but it lasts just as long and ends below where 2027 started."
+     "note": "Slower and shallower than the fast path, but it lasts just as long and ends below where 2027 started.",
+     "label_fr": "2028, le reflux",
+     "note_fr": "Plus lente et moins profonde que sur la trajectoire rapide, mais elle dure tout aussi longtemps et finit sous le point de départ de 2027."
     }
    ]
-  }
+  },
+  "ath_note_fr": "Record historique d'août 2025"
  },
  "btc": {
   "ath": null,
@@ -502,37 +529,44 @@
    [
     100000,
     "round",
-    "The number that defines the last cycle. Reclaiming it is the whole first leg."
+    "The number that defines the last cycle. Reclaiming it is the whole first leg.",
+    "Le chiffre qui définit le dernier cycle. Le reprendre, c'est toute la première jambe."
    ],
    [
     125000,
     "cycle",
-    "Prior cycle high region — the heaviest overhead supply."
+    "Prior cycle high region — the heaviest overhead supply.",
+    "Zone du sommet du cycle précédent — la résistance la plus lourde."
    ],
    [
     150000,
     "round",
-    "Conservative-case target. About a $3T market, near a fifth of physical gold."
+    "Conservative-case target. About a $3T market, near a fifth of physical gold.",
+    "Objectif du scénario conservateur. Un marché d'environ 3 000 Md$, près du cinquième de l'or physique."
    ],
    [
     175000,
     "ext",
-    "Where the 2028 unwind starts from on the faster path."
+    "Where the 2028 unwind starts from on the faster path.",
+    "D'où part le reflux de 2028 sur la trajectoire rapide."
    ],
    [
     200000,
     "round",
-    "The first round number reached only in open price discovery."
+    "The first round number reached only in open price discovery.",
+    "Le premier chiffre rond atteint seulement en découverte de prix."
    ],
    [
     250000,
     "round",
-    "Optimistic-case target. A $5T market, about a third of physical gold."
+    "Optimistic-case target. A $5T market, about a third of physical gold.",
+    "Objectif du scénario optimiste. Un marché de 5 000 Md$, environ le tiers de l'or physique."
    ],
    [
     300000,
     "ext",
-    "ARK's low case for 2030, and the first level beyond either target."
+    "ARK's low case for 2030, and the first level beyond either target.",
+    "Le scénario bas d'ARK pour 2030, et le premier niveau au-delà des deux objectifs."
    ]
   ],
   "bull": {
@@ -599,7 +633,9 @@
      "label": "December 2026",
      "hi": 93700,
      "lo": 80100,
-     "note": "First real pause after reclaiming $90k. Shallow — the trend is not in question yet."
+     "note": "First real pause after reclaiming $90k. Shallow — the trend is not in question yet.",
+     "label_fr": "Décembre 2026",
+     "note_fr": "Première vraie pause après avoir repris les 90 000 $. Peu profonde : la tendance n'est pas remise en cause."
     },
     {
      "a": 7,
@@ -607,7 +643,9 @@
      "label": "April 2027",
      "hi": 120100,
      "lo": 100200,
-     "note": "Rejection at the old cycle-high band. The level that has to break for the rest of the path to exist."
+     "note": "Rejection at the old cycle-high band. The level that has to break for the rest of the path to exist.",
+     "label_fr": "Avril 2027",
+     "note_fr": "Refus sur la bande du sommet du cycle précédent. Le niveau qui doit céder pour que la suite existe."
     },
     {
      "a": 11,
@@ -615,7 +653,9 @@
      "label": "August 2027",
      "hi": 160700,
      "lo": 130100,
-     "note": "A leverage flush on the way into price discovery, mirroring ether's."
+     "note": "A leverage flush on the way into price discovery, mirroring ether's.",
+     "label_fr": "Août 2027",
+     "note_fr": "Une purge des positions à effet de levier à l'entrée en découverte de prix, en écho à celle de l'ether."
     },
     {
      "a": 16,
@@ -623,7 +663,9 @@
      "label": "2028, the unwind",
      "hi": 242900,
      "lo": 94900,
-     "note": "Post-halving-year exhaustion: $243k down to $95k. Bitcoin's version of the drawdown that ends most people's positions."
+     "note": "Post-halving-year exhaustion: $243k down to $95k. Bitcoin's version of the drawdown that ends most people's positions.",
+     "label_fr": "2028, le reflux",
+     "note_fr": "Essoufflement de l'année qui suit le halving : de 243 000 $ à 95 000 $. La version bitcoin de la baisse qui met fin à la plupart des positions."
     }
    ]
   },
@@ -691,7 +733,9 @@
      "label": "December 2026",
      "hi": 91900,
      "lo": 80600,
-     "note": "A stall below $90k. Nothing structural."
+     "note": "A stall below $90k. Nothing structural.",
+     "label_fr": "Décembre 2026",
+     "note_fr": "Un palier sous les 90 000 $. Rien de structurel."
     },
     {
      "a": 7,
@@ -699,7 +743,9 @@
      "label": "April 2027",
      "hi": 103200,
      "lo": 91800,
-     "note": "Turned away short of the prior cycle high, which caps the whole path lower."
+     "note": "Turned away short of the prior cycle high, which caps the whole path lower.",
+     "label_fr": "Avril 2027",
+     "note_fr": "Repoussé avant le sommet du cycle précédent, ce qui plafonne toute la trajectoire."
     },
     {
      "a": 16,
@@ -707,9 +753,12 @@
      "label": "2028, the unwind",
      "hi": 171000,
      "lo": 82600,
-     "note": "$171k to $83k. Losing the six-figure handle again is what makes this the slow path."
+     "note": "$171k to $83k. Losing the six-figure handle again is what makes this the slow path.",
+     "label_fr": "2028, le reflux",
+     "note_fr": "De 171 000 $ à 83 000 $. Reperdre les six chiffres est ce qui fait de celle-ci la trajectoire lente."
     }
    ]
-  }
+  },
+  "ath_note_fr": "calculé sur la fenêtre de prix récente à la génération"
  }
 }

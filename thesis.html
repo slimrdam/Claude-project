@@ -272,7 +272,8 @@ function render(){
     cell(t("th.g.gold"), S.big(va.gold_market_usd_bn, "USD"), t("common.editorial")) +
     cell(t("th.g.share"), S.pct(capBn / (va.gold_market_usd_bn || 1), 0), "", "var(--btc)");
   document.getElementById("goldnote").textContent = t("th.g.lede", {
-    target: S.usd(btcTgt), cap: S.big(capBn, "USD"), gold: S.big(va.gold_market_usd_bn, "USD")});
+    target: S.usd(btcTgt), cap: S.big(capBn, "USD"), gold: S.big(va.gold_market_usd_bn, "USD"),
+    share: S.pct(capBn / (va.gold_market_usd_bn || 1), 0)});
   const scale = v => v/0.08*100;
   document.getElementById("ratio").innerHTML =
     bar(t("th.s4.ratio.now"), scale(now), S.num(now,4), "var(--down)") +
