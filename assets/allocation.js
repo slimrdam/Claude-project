@@ -88,12 +88,15 @@ function spot(which) {
    the reader last set, so the other one is the derived value and moving the
    years slider updates it rather than silently changing both. */
 const fx = () => (D.market && D.market.eurusd && D.market.eurusd.rate) || 1.1;
-const caseTarget = (which, k) => A.cases[k][which + "_usd"] / fx();
+/* the simulator has its own targets: its horizon runs past 2030, so the cases on
+   parts one and three would understate it */
+const SIMC = () => A.simulator_cases || A.cases;
+const caseTarget = (which, k) => SIMC()[k][which + "_usd"] / fx();
 
 function target(which) {
   const set = P[which + "Target"];
   if (set != null) return set;
-  return Math.round(caseTarget(which, "bull"));          // default: the bull case
+  return Math.round(caseTarget(which, "bull"));          // default: the optimistic case
 }
 function growth(which) {
   if (P[which + "Mode"] === "growth" && P[which + "Growth"] != null) return P[which + "Growth"];
@@ -224,7 +227,8 @@ function render() {
   $("years").value = years;
   $("preset").textContent = t("al.preset");
   $("presetnote").textContent = t("al.preset.d",
-    {btc:S.usd(A.cases.bull.btc_usd), eth:S.usd(A.cases.bull.eth_usd), year:A.horizon_year});
+    {btc:S.usd(SIMC().bull.btc_usd), eth:S.usd(SIMC().bull.eth_usd),
+     year:(A.simulator_cases && A.simulator_cases.horizon_year) || A.horizon_year});
 
   ["eth","btc"].forEach(w => paintAsset(w, w === "eth" ? ge : gb, act));
 
@@ -292,6 +296,7 @@ function buildInputs() {
         `<div class="inp"><label for="${w}S" id="${w}SLbl"></label>` +
           `<input type="number" id="${w}S" min="1" step="${w==="eth"?10:500}"></div>` +
       `</div>` +
+      `<p class="note dim" id="${w}Hist" style="margin:6px 0 0;font-size:12px"></p>` +
       `<div class="field" style="margin-top:14px"><label for="${w}G">` +
         `<span id="${w}GLbl"></span><b id="${w}GVal" style="color:${col}"></b></label>` +
       `<input type="range" id="${w}G" min="-40" max="120" step="0.5">` +
@@ -342,6 +347,19 @@ function paintAsset(w, g, act) {
   $(w+"L2").textContent = t("al.proj.hold");
   $(w+"V2").textContent = S.num(act.finals[idx] / end, 4) + " " + w.toUpperCase();
   $(w+"L3").textContent = t("al.proj.worth"); $(w+"V3").textContent = S.eur(act.finals[idx]);
+
+  /* what the asset has actually returned per year over the long run, so the growth
+     the target implies can be read against something rather than in isolation */
+  const lr = D.notes && D.notes.long_run_returns && D.notes.long_run_returns[w];
+  const hist = $(w+"Hist");
+  if (hist) {
+    const yrs = lr ? (Date.parse(D.market.as_of || D.generated) - Date.parse(lr.from)) / 31557600000 : 0;
+    const usdNow = w === "eth" ? D.stats.eth_now : (D.market && D.market.btc_usd);
+    hist.textContent = (lr && yrs > 1 && usdNow)
+      ? t("al.hist", {pct: S.signed(Math.pow(usdNow / lr.usd, 1 / yrs) - 1, 0),
+                      n: Math.round(yrs), since: S.date(lr.from)})
+      : "";
+  }
 
   syncInput(w+"T", Math.round(end));
   syncInput(w+"S", Math.round(sp));

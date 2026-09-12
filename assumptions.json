@@ -4,16 +4,29 @@
   "horizon_year": 2030,
   "cases": {
     "base": {
-      "btc_usd": 250000,
+      "btc_usd": 150000,
       "eth_usd": 12500,
-      "ethbtc": 0.05
+      "ethbtc": 0.0833
+    },
+    "bull": {
+      "btc_usd": 250000,
+      "eth_usd": 25000,
+      "ethbtc": 0.1
+    },
+    "_comment": "The two 2030 cases. base is the conservative one and bull the optimistic one; both are upward, so neither is a downside scenario. The genuinely bad outcome is modelled on the allocation page, where the crypto position goes to zero. Note the implied ETH/BTC ratio (eth_usd / btc_usd) sits above the ten-year average shown in ethbtc_reference: the cases value each asset on its own terms, so the ratio they imply is an output, not an input."
+  },
+  "simulator_cases": {
+    "_comment": "Targets for the fifteen-year simulator on the allocation page. They sit above the 2030 cases because the horizon is longer: the 2030 cases stop at 2030, these run to horizon_year. Kept separate so neither set drags the other.",
+    "horizon_year": 2041,
+    "horizon_years": 15,
+    "base": {
+      "btc_usd": 300000,
+      "eth_usd": 25000
     },
     "bull": {
       "btc_usd": 500000,
-      "eth_usd": 25000,
-      "ethbtc": 0.05
-    },
-    "_comment": "bull is the thesis target; base is exactly half of it. Note that half of a 6x is still a 3x \u2014 this is the less optimistic path, not a downside scenario. The genuinely bad outcome is modelled on the allocation page instead."
+      "eth_usd": 50000
+    }
   },
   "ethbtc_reference": {
     "_comment": "Historical ETH/BTC averages. Not auto-refreshed: the free CoinGecko window is 365 days, too short to compute a 10-year mean. The live ratio IS refreshed and shown beside these.",

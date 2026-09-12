@@ -1,165 +1,177 @@
 {
- "_comment": "Editorial content. NOT auto-refreshed. Every block carries its own as_of and the app prints it, so stale commentary is visible rather than silently wrong. Bilingual: *_fr fields are the French copy.",
- "as_of": "2026-08-15",
- "quotes": [
-  {
-   "who": "BlackRock · $14T AUM",
-   "who_fr": "BlackRock · 14 000 Md$ gérés",
-   "head": "“The toll road for tokenised finance”",
-   "head_fr": "« Le péage de la finance tokenisée »",
-   "body": "Larry Fink describes Ethereum as the toll road for tokenised finance, projecting that the $500 trillion of global financial assets will eventually be tokenised for 24/7 settlement. Most existing tokenised real-world assets already sit on Ethereum.",
-   "body_fr": "Larry Fink qualifie Ethereum de péage de la finance tokenisée, et prévoit que les 500 000 milliards de dollars d'actifs financiers mondiaux finiront tokenisés pour un règlement 24h/24. L'essentiel des actifs réels déjà tokenisés se trouve sur Ethereum."
+  "_comment": "Editorial content. NOT auto-refreshed. Every block carries its own as_of and the app prints it, so stale commentary is visible rather than silently wrong. Bilingual: *_fr fields are the French copy.",
+  "as_of": "2026-08-15",
+  "quotes": [
+    {
+      "who": "BlackRock · $14T AUM",
+      "who_fr": "BlackRock · 14 000 Md$ gérés",
+      "head": "“The toll road for tokenised finance”",
+      "head_fr": "« Le péage de la finance tokenisée »",
+      "body": "Larry Fink describes Ethereum as the toll road for tokenised finance, projecting that the $500 trillion of global financial assets will eventually be tokenised for 24/7 settlement. Most existing tokenised real-world assets already sit on Ethereum.",
+      "body_fr": "Larry Fink qualifie Ethereum de péage de la finance tokenisée, et prévoit que les 500 000 milliards de dollars d'actifs financiers mondiaux finiront tokenisés pour un règlement 24h/24. L'essentiel des actifs réels déjà tokenisés se trouve sur Ethereum."
+    },
+    {
+      "who": "Fidelity · $4.9T AUM",
+      "who_fr": "Fidelity · 4 900 Md$ gérés",
+      "head": "“A unique hybrid asset”",
+      "head_fr": "« Un actif hybride unique »",
+      "body": "Sets out ether's hybrid case: network fuel, universal reserve collateral, and a natively yield-bearing asset through staking, at roughly 2.7% a year.",
+      "body_fr": "Défend la thèse hybride de l'ether : carburant du réseau, collatéral de réserve universel, et actif à rendement natif via le staking, autour de 2,7 % par an."
+    },
+    {
+      "who": "Franklin Templeton · $2T AUM",
+      "who_fr": "Franklin Templeton · 2 000 Md$ gérés",
+      "head": "“10x stablecoins, and AI agents”",
+      "head_fr": "« Stablecoins ×10 et agents IA »",
+      "body": "Projects tenfold growth in stablecoins, and notes that autonomous AI agents will use blockchain rails natively because they have no legal identity and cannot hold bank accounts.",
+      "body_fr": "Prévoit une multiplication par dix du marché des stablecoins, et souligne que les agents IA autonomes utiliseront nativement la blockchain : ils n'ont ni identité juridique ni compte bancaire."
+    }
+  ],
+  "adoption": {
+    "as_of": "2026-08-15",
+    "cards": [
+      [
+        "Tokenised assets, all chains",
+        "Actifs tokenisés, toutes chaînes",
+        "$38.2B",
+        "Excludes stablecoins. Growing roughly 30% a quarter.",
+        "Hors stablecoins. En croissance d'environ 30 % par trimestre."
+      ],
+      [
+        "Ethereum's share of tokenised assets",
+        "Part d'Ethereum dans les actifs tokenisés",
+        "~57%",
+        "BlackRock, JPMorgan and Amundi funds settle here.",
+        "Les fonds BlackRock, JPMorgan et Amundi s'y règlent."
+      ],
+      [
+        "Daily active users, L1 + L2",
+        "Utilisateurs actifs quotidiens, L1 + L2",
+        "3.8M",
+        "About 500k in 2021. No free API publishes this reliably.",
+        "Environ 500 000 en 2021. Aucune API gratuite ne publie ce chiffre de façon fiable."
+      ],
+      [
+        "Spot ETH ETF net inflows",
+        "Collecte nette des ETF ETH au comptant",
+        "$1.4B",
+        "Ten consecutive days in late August.",
+        "Dix jours consécutifs fin août."
+      ]
+    ],
+    "caveat": "Messari's August read found Ethereum's fundamentals close to flat: tokenised value +2.1%, stablecoin supply +0.2%, application revenue +1.6%, transactions −3.2%. Flows recovered; usage didn't.",
+    "caveat_fr": "L'analyse Messari d'août trouvait des fondamentaux Ethereum quasi stables : valeur tokenisée +2,1 %, offre de stablecoins +0,2 %, revenus applicatifs +1,6 %, transactions −3,2 %. Les flux sont revenus ; l'usage non."
   },
-  {
-   "who": "Fidelity · $4.9T AUM",
-   "who_fr": "Fidelity · 4 900 Md$ gérés",
-   "head": "“A unique hybrid asset”",
-   "head_fr": "« Un actif hybride unique »",
-   "body": "Sets out ether's hybrid case: network fuel, universal reserve collateral, and a natively yield-bearing asset through staking, at roughly 2.7% a year.",
-   "body_fr": "Défend la thèse hybride de l'ether : carburant du réseau, collatéral de réserve universel, et actif à rendement natif via le staking, autour de 2,7 % par an."
+  "ethbtc_levels": [
+    [
+      0.0352,
+      "next resistance"
+    ],
+    [
+      0.0316,
+      "resistance"
+    ],
+    [
+      0.03,
+      "the shelf"
+    ],
+    [
+      0.0259,
+      "support"
+    ]
+  ],
+  "treasury_note": {
+    "as_of": "2026-09-05",
+    "text": "Accumulation was ferocious through August 2025, then essentially stopped. Whatever is driving the equity's rerating, it is not the company buying more ether.",
+    "text_fr": "L'accumulation a été féroce jusqu'en août 2025, puis s'est essentiellement arrêtée. Quelle que soit la cause de la revalorisation de l'action, ce n'est pas la société qui achète davantage d'ether."
   },
-  {
-   "who": "Franklin Templeton · $2T AUM",
-   "who_fr": "Franklin Templeton · 2 000 Md$ gérés",
-   "head": "“10x stablecoins, and AI agents”",
-   "head_fr": "« Stablecoins ×10 et agents IA »",
-   "body": "Projects tenfold growth in stablecoins, and notes that autonomous AI agents will use blockchain rails natively because they have no legal identity and cannot hold bank accounts.",
-   "body_fr": "Prévoit une multiplication par dix du marché des stablecoins, et souligne que les agents IA autonomes utiliseront nativement la blockchain : ils n'ont ni identité juridique ni compte bancaire."
+  "treasury_profile": {
+    "_comment": "Company-specific claims about SharpLink's funding model. Editorial, from company filings and releases — no free API publishes capital structure. Re-verify when the company reports.",
+    "as_of": "2026-09-05",
+    "company": "SharpLink Gaming (SBET)",
+    "debt": "No debt disclosed. The treasury was built with equity issuance, not borrowing, so there is no maturity date on which cash must exist.",
+    "debt_fr": "Aucune dette déclarée. La trésorerie a été constituée par émission d'actions, pas par emprunt : il n'existe donc aucune échéance à laquelle du cash doit être disponible.",
+    "opex": "Operating costs are reported to sit below what the staked treasury earns, so the treasury funds the company rather than the company having to sell the treasury.",
+    "opex_fr": "Les frais d'exploitation sont annoncés comme inférieurs à ce que rapporte la trésorerie stakée : c'est la trésorerie qui finance la société, et non l'inverse.",
+    "caveat": "Both claims come from company disclosure, not from an independent feed, and a policy that holds today can change at the next board meeting. Treat them as the company's stated position, re-checked when it reports.",
+    "caveat_fr": "Ces deux affirmations proviennent des communications de la société, pas d'une source indépendante, et une politique valable aujourd'hui peut changer au prochain conseil d'administration. À considérer comme la position déclarée de la société, à revérifier à chaque publication."
+  },
+  "forecasts": {
+    "_comment": "Published third-party price targets, taken from the investment simulator. Editorial: these are other people's forecasts, not this site's, and long-range crypto forecasts have a poor record. Kept so the spread is visible rather than a single number.",
+    "as_of": "2026-08-31",
+    "eth": [
+      {
+        "who": "Standard Chartered",
+        "usd": 40000,
+        "by": "2030",
+        "note": "Stablecoin and tokenisation case",
+        "note_fr": "Thèse des stablecoins et de la tokenisation"
+      },
+      {
+        "who": "VanEck, base case",
+        "usd": 11800,
+        "by": "2030",
+        "note": "Valued on the fees the network earns",
+        "note_fr": "Valorisé sur les frais que le réseau perçoit"
+      },
+      {
+        "who": "Cautious end of the range",
+        "usd": 8000,
+        "by": "2030",
+        "note": "Rival chains capture the fees",
+        "note_fr": "Les chaînes concurrentes captent les frais"
+      }
+    ],
+    "btc": [
+      {
+        "who": "ARK Invest, base case",
+        "usd": 710000,
+        "by": "2030",
+        "note": "Digital-gold model",
+        "note_fr": "Modèle de l'or numérique"
+      },
+      {
+        "who": "ARK Invest, bear case",
+        "usd": 300000,
+        "by": "2030",
+        "note": "Same model, lower adoption",
+        "note_fr": "Même modèle, adoption plus faible"
+      },
+      {
+        "who": "Aggregated analyst average",
+        "usd": 114000,
+        "by": "2030",
+        "note": "The median of published forecasts",
+        "note_fr": "La médiane des prévisions publiées"
+      }
+    ],
+    "caveat": "These are published third-party targets converted to a common horizon. The spread between them is wider than any one of them is precise; read the range, not a number.",
+    "caveat_fr": "Ce sont des objectifs publiés par des tiers, ramenés à un horizon commun. L'écart entre eux est plus large qu'aucun n'est précis : lire la fourchette, pas un chiffre."
+  },
+  "valuation_anchors": {
+    "_comment": "The arithmetic behind the two cases. Editorial inputs; no free API publishes assets under management or the gold market's size.",
+    "as_of": "2026-08-15",
+    "aum_top3_usd_bn": 23000,
+    "aum_note": "BlackRock, Fidelity and Franklin Templeton combined",
+    "aum_note_fr": "BlackRock, Fidelity et Franklin Templeton réunis",
+    "allocation_pct": 0.025,
+    "allocation_note": "Within the 1% to 5% range portfolio research suggests",
+    "allocation_note_fr": "Dans la fourchette de 1 % à 5 % que suggère la recherche de portefeuille",
+    "gold_market_usd_bn": 16000,
+    "btc_supply_m": 19.9,
+    "gold_note": "Bitcoin at $200,000 is about a $4T market, roughly a quarter of physical gold",
+    "gold_note_fr": "Un bitcoin à 200 000 $ représente un marché d'environ 4 000 Md$, soit près du quart de l'or physique"
+  },
+  "long_run_returns": {
+    "_comment": "Fixed historical anchors, used to show what each asset has actually returned per year over the long run beside the return a price target implies. No free API publishes a ten-year window, so the start prices are editorial and dated; the end of the window is live spot, so the figure refreshes on its own. Monthly closes, rounded, from the first of the month.",
+    "as_of": "2026-09-12",
+    "btc": {
+      "from": "2016-09-01",
+      "usd": 575
+    },
+    "eth": {
+      "from": "2016-09-01",
+      "usd": 12
+    }
   }
- ],
- "adoption": {
-  "as_of": "2026-08-15",
-  "cards": [
-   [
-    "Tokenised assets, all chains",
-    "Actifs tokenisés, toutes chaînes",
-    "$38.2B",
-    "Excludes stablecoins. Growing roughly 30% a quarter.",
-    "Hors stablecoins. En croissance d'environ 30 % par trimestre."
-   ],
-   [
-    "Ethereum's share of tokenised assets",
-    "Part d'Ethereum dans les actifs tokenisés",
-    "~57%",
-    "BlackRock, JPMorgan and Amundi funds settle here.",
-    "Les fonds BlackRock, JPMorgan et Amundi s'y règlent."
-   ],
-   [
-    "Daily active users, L1 + L2",
-    "Utilisateurs actifs quotidiens, L1 + L2",
-    "3.8M",
-    "About 500k in 2021. No free API publishes this reliably.",
-    "Environ 500 000 en 2021. Aucune API gratuite ne publie ce chiffre de façon fiable."
-   ],
-   [
-    "Spot ETH ETF net inflows",
-    "Collecte nette des ETF ETH au comptant",
-    "$1.4B",
-    "Ten consecutive days in late August.",
-    "Dix jours consécutifs fin août."
-   ]
-  ],
-  "caveat": "Messari's August read found Ethereum's fundamentals close to flat: tokenised value +2.1%, stablecoin supply +0.2%, application revenue +1.6%, transactions −3.2%. Flows recovered; usage didn't.",
-  "caveat_fr": "L'analyse Messari d'août trouvait des fondamentaux Ethereum quasi stables : valeur tokenisée +2,1 %, offre de stablecoins +0,2 %, revenus applicatifs +1,6 %, transactions −3,2 %. Les flux sont revenus ; l'usage non."
- },
- "ethbtc_levels": [
-  [
-   0.0352,
-   "next resistance"
-  ],
-  [
-   0.0316,
-   "resistance"
-  ],
-  [
-   0.03,
-   "the shelf"
-  ],
-  [
-   0.0259,
-   "support"
-  ]
- ],
- "treasury_note": {
-  "as_of": "2026-09-05",
-  "text": "Accumulation was ferocious through August 2025, then essentially stopped. Whatever is driving the equity's rerating, it is not the company buying more ether.",
-  "text_fr": "L'accumulation a été féroce jusqu'en août 2025, puis s'est essentiellement arrêtée. Quelle que soit la cause de la revalorisation de l'action, ce n'est pas la société qui achète davantage d'ether."
- },
- "treasury_profile": {
-  "_comment": "Company-specific claims about SharpLink's funding model. Editorial, from company filings and releases — no free API publishes capital structure. Re-verify when the company reports.",
-  "as_of": "2026-09-05",
-  "company": "SharpLink Gaming (SBET)",
-  "debt": "No debt disclosed. The treasury was built with equity issuance, not borrowing, so there is no maturity date on which cash must exist.",
-  "debt_fr": "Aucune dette déclarée. La trésorerie a été constituée par émission d'actions, pas par emprunt : il n'existe donc aucune échéance à laquelle du cash doit être disponible.",
-  "opex": "Operating costs are reported to sit below what the staked treasury earns, so the treasury funds the company rather than the company having to sell the treasury.",
-  "opex_fr": "Les frais d'exploitation sont annoncés comme inférieurs à ce que rapporte la trésorerie stakée : c'est la trésorerie qui finance la société, et non l'inverse.",
-  "caveat": "Both claims come from company disclosure, not from an independent feed, and a policy that holds today can change at the next board meeting. Treat them as the company's stated position, re-checked when it reports.",
-  "caveat_fr": "Ces deux affirmations proviennent des communications de la société, pas d'une source indépendante, et une politique valable aujourd'hui peut changer au prochain conseil d'administration. À considérer comme la position déclarée de la société, à revérifier à chaque publication."
- },
- "forecasts": {
-  "_comment": "Published third-party price targets, taken from the investment simulator. Editorial: these are other people's forecasts, not this site's, and long-range crypto forecasts have a poor record. Kept so the spread is visible rather than a single number.",
-  "as_of": "2026-08-31",
-  "eth": [
-   {
-    "who": "Standard Chartered",
-    "usd": 40000,
-    "by": "2030",
-    "note": "Stablecoin and tokenisation case",
-    "note_fr": "Thèse des stablecoins et de la tokenisation"
-   },
-   {
-    "who": "VanEck, base case",
-    "usd": 11800,
-    "by": "2030",
-    "note": "Valued on the fees the network earns",
-    "note_fr": "Valorisé sur les frais que le réseau perçoit"
-   },
-   {
-    "who": "Cautious end of the range",
-    "usd": 8000,
-    "by": "2030",
-    "note": "Rival chains capture the fees",
-    "note_fr": "Les chaînes concurrentes captent les frais"
-   }
-  ],
-  "btc": [
-   {
-    "who": "ARK Invest, base case",
-    "usd": 710000,
-    "by": "2030",
-    "note": "Digital-gold model",
-    "note_fr": "Modèle de l'or numérique"
-   },
-   {
-    "who": "ARK Invest, bear case",
-    "usd": 300000,
-    "by": "2030",
-    "note": "Same model, lower adoption",
-    "note_fr": "Même modèle, adoption plus faible"
-   },
-   {
-    "who": "Aggregated analyst average",
-    "usd": 114000,
-    "by": "2030",
-    "note": "The median of published forecasts",
-    "note_fr": "La médiane des prévisions publiées"
-   }
-  ],
-  "caveat": "These are published third-party targets converted to a common horizon. The spread between them is wider than any one of them is precise; read the range, not a number.",
-  "caveat_fr": "Ce sont des objectifs publiés par des tiers, ramenés à un horizon commun. L'écart entre eux est plus large qu'aucun n'est précis : lire la fourchette, pas un chiffre."
- },
- "valuation_anchors": {
-  "_comment": "The arithmetic behind the two cases. Editorial inputs; no free API publishes assets under management or the gold market's size.",
-  "as_of": "2026-08-15",
-  "aum_top3_usd_bn": 23000,
-  "aum_note": "BlackRock, Fidelity and Franklin Templeton combined",
-  "aum_note_fr": "BlackRock, Fidelity et Franklin Templeton réunis",
-  "allocation_pct": 0.025,
-  "allocation_note": "Within the 1% to 5% range portfolio research suggests",
-  "allocation_note_fr": "Dans la fourchette de 1 % à 5 % que suggère la recherche de portefeuille",
-  "gold_market_usd_bn": 16000,
-  "btc_supply_m": 19.9,
-  "gold_note": "Bitcoin at $200,000 is about a $4T market, roughly a quarter of physical gold",
-  "gold_note_fr": "Un bitcoin à 200 000 $ représente un marché d'environ 4 000 Md$, soit près du quart de l'or physique"
- }
 }

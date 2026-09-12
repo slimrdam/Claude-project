@@ -44,12 +44,16 @@ function signed(v, dp) {
   if (v == null || !isFinite(v)) return "—";
   return (v >= 0 ? "+" : "−") + num(Math.abs(v) * 100, dp == null ? 1 : dp) + " %";
 }
-/* Big money in words, so $146,800,000,000 reads as $147B / 147 Md$ */
+/* Big money in words. The argument is given in billions, so $23,000bn reads
+   as $23.0T in English and 23 000 Md$ in French, where the suffix carries the
+   unit and the symbol closes the amount. */
+const SYM = { USD: "$", EUR: "€" };
 function big(v, ccy) {
   if (v == null || !isFinite(v)) return "—";
-  const fr = root.I18N.lang === "fr";
-  if (Math.abs(v) >= 1000) return money(v / 1000, ccy, 1).replace(/([\d\s,.]+)/, "$1") + (fr ? " 000 Md" : "T");
-  return money(v, ccy, v >= 100 ? 0 : 1) + (fr ? " Md" : "B");
+  const dp = Math.abs(v) >= 100 ? 0 : 1;
+  if (root.I18N.lang === "fr") return num(v, dp) + " Md" + (SYM[ccy] || "");
+  if (Math.abs(v) >= 1000) return money(v / 1000, ccy, 1) + "T";
+  return money(v, ccy, dp) + "B";
 }
 function date(iso) {
   if (!iso) return "—";
