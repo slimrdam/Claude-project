@@ -328,13 +328,138 @@ def fetch_tvl():
             "eth_share": round(eth / total, 4)}
 
 
-def build_market(prev, eth_now, btc_now, ethbtc):
+def _sl_series(block):
+    """SharpLink returns each metric as [{row_number, Date, <Metric Name>: value}].
+    Take the value column positionally so a renamed metric does not break parsing."""
+    out = []
+    for row in block or []:
+        date = row.get("Date") or row.get("Disclaimer Date")
+        vals = [v for k, v in row.items() if k not in ("row_number", "Date")]
+        if not date or not vals:
+            continue
+        try:
+            v = float(str(vals[0]).replace("$", "").replace(",", "").replace("x", "").strip())
+        except (ValueError, AttributeError):
+            continue
+        try:
+            d = dt.datetime.strptime(date.strip(), "%B %d, %Y").date()
+        except ValueError:
+            continue
+        out.append((_iso(d), v))
+    return sorted(out)
+
+
+def fetch_sharplink():
+    """SharpLink's own dashboard figures.
+
+    The public dashboard renders its numbers client-side, but the endpoint behind
+    it answers plain requests. Anchoring to this removes the guesswork: ether held,
+    share count and mNAV come from the company rather than from hand-entered
+    values, and each arrives as a dated series so historical mNAV can be computed
+    from the holdings that actually applied at the time.
+    """
+    j = get("https://www.sharplink.com/api/dashboard/impact3-data",
+            headers={"Accept": "application/json"}).json()
+    holdings = _sl_series(j.get("total_eth_holdings"))
+    conc     = _sl_series(j.get("eth_concentration"))
+    navps    = _sl_series(j.get("Basic-equivalent NAV per share"))
+    nav      = _sl_series(j.get("Sharplink NAV"))
+    rewards  = _sl_series(j.get("staking_rewards"))
+    mnav_s   = _sl_series(j.get("mnav_data"))
+    if not holdings:
+        raise RuntimeError("sharplink returned no holdings series")
+
+    fd = (j.get("fdmnav") or [{}])[0]
+    dis = (j.get("disclaimer_data") or [{}])[0]
+
+    def num(x):
+        try:
+            return float(str(x).replace("$", "").replace(",", "").replace("x", "").strip())
+        except (ValueError, AttributeError, TypeError):
+            return None
+
+    # shares outstanding follows from ETH per 1,000 shares
+    shares = None
+    if conc and holdings and conc[-1][1]:
+        shares = round(holdings[-1][1] / conc[-1][1] * 1000)
+
+    return {
+        "eth_held": holdings[-1][1],
+        "eth_held_date": holdings[-1][0],
+        "holdings_series": holdings,
+        "concentration_series": conc,
+        "eth_concentration": conc[-1][1] if conc else None,
+        "shares": shares,
+        "nav_usd": nav[-1][1] if nav else None,
+        "nav_per_share": navps[-1][1] if navps else None,
+        "staking_rewards": rewards[-1][1] if rewards else None,
+        "mnav": mnav_s[-1][1] if mnav_s else None,
+        # the company's own published series, where it offers one; the computed
+        # series in data["series"] is ETH-only and will differ slightly, because
+        # SharpLink NAV also counts dollar holdings and fund P&L
+        "mnav_series": mnav_s,
+        "navps_series": navps,
+        "fd_mnav": num(fd.get("Fully Diluted mNAV")),
+        "market_cap": num(fd.get("Market Cap")),
+        "enterprise_value": num(fd.get("Enterprise Value")),
+        "as_of": dis.get("Disclaimer Date"),
+        "source": "sharplink.com/dashboard",
+    }
+
+
+def fetch_strc():
+    """STRC, Strategy's preferred share. strategy.com answers 403 to any server
+    request, so the price comes from the same source already used for SBET."""
+    j = get("https://stockanalysis.com/api/symbol/s/STRC/history?range=1Y&period=Daily").json()
+    rows = j.get("data") or []
+    if not rows:
+        raise RuntimeError("no STRC rows")
+    last = rows[0]
+    return {"price": round(float(last["c"]), 2), "date": last["t"],
+            "change_pct": last.get("ch"),
+            "history": [[r["t"], round(float(r["c"]), 2)] for r in rows[:180]][::-1]}
+
+
+def fetch_short_interest(ticker):
+    """Short interest from Nasdaq's own filing data. Fintel serves a Cloudflare
+    challenge to servers; this is the same twice-monthly FINRA data it reports."""
+    url = (f"https://api.nasdaq.com/api/quote/{ticker}/short-interest?assetclass=stocks")
+    j = get(url, headers={"Accept": "application/json"}).json()
+    rows = (((j.get("data") or {}).get("shortInterestTable") or {}).get("rows") or [])
+    if not rows:
+        raise RuntimeError("nasdaq returned no short-interest rows")
+    def n(x):
+        try:
+            return float(str(x).replace(",", ""))
+        except (ValueError, TypeError):
+            return None
+    hist = []
+    for r in rows:
+        m, d, y = r["settlementDate"].split("/")
+        hist.append({"date": f"{y}-{m}-{d}", "interest": n(r.get("interest")),
+                     "avg_volume": n(r.get("avgDailyShareVolume")),
+                     "days_to_cover": n(r.get("daysToCover"))})
+    hist.sort(key=lambda r: r["date"])
+    last = hist[-1]
+    return {"interest": last["interest"], "settlement": last["date"],
+            "avg_volume": last["avg_volume"], "days_to_cover": last["days_to_cover"],
+            "history": hist}
+
+
+def build_market(prev, eth_now, btc_now, ethbtc, sl=None):
     """Assemble the market block, keeping the last good value for anything that fails."""
     old = prev.get("market", {})
     out = {"as_of": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
            "eth_usd": eth_now, "btc_usd": btc_now, "ethbtc": ethbtc, "stale": []}
+    # already fetched for compute(); reuse rather than calling the endpoint twice
+    if sl:
+        out["sharplink"] = {k: v for k, v in sl.items()
+                            if k not in ("holdings_series", "concentration_series")}
+    elif old.get("sharplink"):
+        out["sharplink"] = old["sharplink"]; out["stale"].append("sharplink")
     for name, fn in (("eurusd", fetch_eurusd), ("hicp", fetch_hicp), ("fng", fetch_fng),
-                     ("stables", fetch_stables), ("tvl", fetch_tvl)):
+                     ("stables", fetch_stables), ("tvl", fetch_tvl),
+                     ("strc", fetch_strc), ("short", lambda: fetch_short_interest("SBET"))):
         try:
             out[name] = fn()
         except Exception as e:
@@ -353,16 +478,34 @@ def month_key(d):
     return d[:7]
 
 
-def compute(sbet, eth, btc, cfg):
+def compute(sbet, eth, btc, cfg, sl=None):
     dates = sorted(d for d in sbet if d in eth)
     if len(dates) < 30:
         die(f"only {len(dates)} overlapping sessions - refusing to publish")
 
-    held = cfg["eth_held"]
-    shares = cfg["shares_outstanding"]
-    # mNAV needs eth_held and share count, which drift; only draw it for the recent
-    # window where the hand-verified config values are a fair approximation.
-    mnav_from = _iso(dt.date.fromisoformat(dates[-1]) - dt.timedelta(days=90))
+    # SharpLink publishes ether held and ETH-per-1,000-shares as dated series, so
+    # mNAV can use the treasury that actually applied on each session instead of
+    # assuming today's holdings held all along. config.json is the fallback.
+    sl = sl or {}
+    hold_series = sl.get("holdings_series") or []
+    conc_series = sl.get("concentration_series") or []
+    held = sl.get("eth_held") or cfg["eth_held"]
+    shares = sl.get("shares") or cfg["shares_outstanding"]
+
+    def _at(series, d, default):
+        """Latest value dated on or before d."""
+        v = default
+        for day, val in series:
+            if day <= d:
+                v = val
+            else:
+                break
+        return v
+
+    # with a real series the whole archive can carry mNAV; without one, keep the
+    # old guard and only draw the window where a single fixed figure is fair
+    mnav_from = (hold_series[0][0] if hold_series
+                 else _iso(dt.date.fromisoformat(dates[-1]) - dt.timedelta(days=90)))
 
     rows, base = [], None
     for i, d in enumerate(dates):
@@ -380,7 +523,10 @@ def compute(sbet, eth, btc, cfg):
         if d in btc and btc[d]:
             r["eb"] = round(e / btc[d], 5)
         if d >= mnav_from:
-            r["mnav"] = round((c * shares) / (held * e), 4)
+            h = _at(hold_series, d, held)
+            k = _at(conc_series, d, None)
+            sh = round(h / k * 1000) if k else shares
+            r["mnav"] = round((c * sh) / (h * e), 4)
         rows.append(r)
 
     B = [r for r in rows if "rel" in r]
@@ -466,8 +612,11 @@ def compute(sbet, eth, btc, cfg):
             "ebtc_now": rows[-1].get("eb"),
         },
         "config": {"eth_held": held, "shares": shares,
+                   "source": "sharplink" if sl.get("eth_held") else "config.json",
+                   "as_of": sl.get("eth_held_date") or cfg["last_verified"],
                    "last_verified": cfg["last_verified"],
-                   "stale": stale_days > cfg.get("stale_after_days", 30),
+                   # only the hand-entered path can go stale; the feed dates itself
+                   "stale": (not sl.get("eth_held")) and stale_days > cfg.get("stale_after_days", 30),
                    "stale_days": stale_days},
         "holdings": cfg["holdings_history"],
         "notes": json.loads((ROOT / "notes.json").read_text()),
@@ -533,12 +682,26 @@ def main():
     if lag > 5:
         die(f"latest overlapping session is {latest}, {lag} days old - feed looks broken")
 
-    data = compute(sbet, eth, btc, cfg)
+    # Non-fatal: if SharpLink is unreachable, compute() falls back to config.json.
+    try:
+        sl = fetch_sharplink()
+        print(f"sharplink: {sl['eth_held']:,.0f} ETH as of {sl['eth_held_date']}, "
+              f"mNAV {sl.get('mnav')}, shares {sl.get('shares'):,}"
+              if sl.get("shares") else f"sharplink: {sl['eth_held']:,.0f} ETH")
+        if abs(sl["eth_held"] - cfg["eth_held"]) / cfg["eth_held"] > 0.02:
+            print(f"  note: config.json says {cfg['eth_held']:,} ETH, the company "
+                  f"reports {sl['eth_held']:,.0f} - the feed is authoritative",
+                  file=sys.stderr)
+    except Exception as e:
+        print(f"warn: sharplink failed ({e}); falling back to config.json", file=sys.stderr)
+        sl = None
+
+    data = compute(sbet, eth, btc, cfg, sl)
     r_last = data["series"][-1]
     data["market"] = build_market(
         prev, r_last["eth"],
         round(r_last["eth"] / r_last["eb"], 2) if r_last.get("eb") else None,
-        r_last.get("eb"))
+        r_last.get("eb"), sl)
     data["assumptions"] = json.loads((ROOT / "assumptions.json").read_text())
     s = data["stats"]
     print(f"  ratio {s['ri_now']} (low {s['low_ri']} on {s['low_d']}, "

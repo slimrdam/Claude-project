@@ -66,7 +66,7 @@ en: {
   /* ---- thesis --------------------------------------------------------- */
   "th.eyebrow": "Part one",
   "th.h1": "Currency supply keeps expanding.<br>Neither of these can.",
-  "th.lede": "Two things hold at once. Money left in an account buys mechanically less each year, which is arithmetic rather than opinion. And the technology a growing share of finance is being rebuilt on trades far below its own past high. It is the second point that is arguable.",
+  "th.lede": "Two things hold at once. Money left in an account buys mechanically less each year, which is arithmetic rather than opinion. And bitcoin's mathematical scarcity, which casts it as digital gold, together with the utility of the Ethereum network, now modernising global financial infrastructure, have given them the highest returns of any financial asset of the past decade. What that implies from here is what follows.",
   "th.s0": "A few definitions",
   "th.s0.lede": "A few definitions first, to make what follows clearer.",
   "th.w1.t": "Blockchain",
@@ -382,7 +382,7 @@ fr: {
   /* ---- thesis --------------------------------------------------------- */
   "th.eyebrow": "Premi\u00e8re partie",
   "th.h1": "La masse mon\u00e9taire ne cesse de cro\u00eetre.<br>Ces deux actifs, non.",
-  "th.lede": "Deux constats tiennent ensemble. L'argent laiss\u00e9 sur un compte ach\u00e8te m\u00e9caniquement moins chaque ann\u00e9e : c'est de l'arithm\u00e9tique, pas une opinion. Et la technologie sur laquelle une part croissante de la finance se reconstruit s'\u00e9change tr\u00e8s en dessous de son sommet. C'est le second point qui pr\u00eate \u00e0 discussion.",
+  "th.lede": "Deux constats tiennent ensemble. L'argent laiss\u00e9 sur un compte ach\u00e8te m\u00e9caniquement moins chaque ann\u00e9e : c'est de l'arithm\u00e9tique, pas une opinion. Et la raret\u00e9 math\u00e9matique du bitcoin, qui en fait un or num\u00e9rique, comme l'utilit\u00e9 du r\u00e9seau Ethereum, en passe de moderniser l'infrastructure financi\u00e8re mondiale, leur ont conf\u00e9r\u00e9 les meilleures rentabilit\u00e9s de tous les actifs financiers de la derni\u00e8re d\u00e9cennie. Voyons ce que cela implique pour la suite.",
   "th.s0": "\u00c0 savoir,",
   "th.s0.lede": "Commen\u00e7ons par quelques d\u00e9finitions pour mieux comprendre la suite.",
   "th.w1.t": "Blockchain",
