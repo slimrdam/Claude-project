@@ -41,7 +41,7 @@ en: {
   /* ---- home ----------------------------------------------------------- */
   "home.eyebrow": "An investment thesis in five parts",
   "home.h1": "The euro has lost a third<br>of its purchasing power<br><em>since 2000.</em>",
-  "home.lede": "Five parts, in order. What holding cash costs over time. How large a crypto position must be before it changes a portfolio's outcome. The scale of the falls on the way to the valuations in question. How market sentiment has historically related to price. And how listed companies holding crypto on their balance sheet are financed.",
+  "home.lede": "Five chapters, each setting out the concepts before the day-to-day figures. What holding uninvested cash costs over time. How large an investment in bitcoin and ethereum must be to improve a portfolio's return without inflating its risk. The scale of the falls on the way to the valuations in question. How market sentiment has historically related to price. And how listed companies holding crypto on their balance sheet are financed.",
   "home.start": "Begin \u2192",
   "home.tick.eth": "Ether",
   "home.tick.btc": "Bitcoin",
@@ -60,7 +60,7 @@ en: {
   "home.c4.t": "Sentiment",
   "home.c4.d": "A gauge of market fear and greed, daily since 2018, plotted against price. The pattern is consistent: the strongest returns were bought during the least comfortable periods. What follows from that, and when to reduce exposure.",
   "home.c5.t": "Treasury companies",
-  "home.c5.d": "Some listed companies hold crypto on their balance sheet and little else, and their shares trade like any other. At times the market prices those shares below the crypto the company owns. Why that happens, why borrowing to buy is the riskier construction, and one company followed in detail.",
+  "home.c5.d": "Some listed companies hold bitcoin or ethereum on their balance sheet, and their shares trade like any other. What happens when the market values them below or above the crypto they hold. Why that occurs, and what risks and opportunities it creates.",
   "home.read": "Read",
 
   /* ---- thesis --------------------------------------------------------- */
@@ -329,8 +329,8 @@ en: {
 
 fr: {
   /* ---- shell ---------------------------------------------------------- */
-  "app.name": "Face \u00e0 la dilution mon\u00e9taire",
-  "app.short": "Dilution",
+  "app.name": "Le pari sur la d\u00e9pr\u00e9ciation mon\u00e9taire",
+  "app.short": "D\u00e9pr\u00e9ciation",
   "nav.home": "Accueil",
   "nav.thesis": "La thèse",
   "nav.allocation": "Combien",
@@ -357,7 +357,7 @@ fr: {
   /* ---- home ----------------------------------------------------------- */
   "home.eyebrow": "Une th\u00e8se d'investissement en cinq parties",
   "home.h1": "L'euro a perdu un tiers<br>de son pouvoir d'achat<br><em>depuis 2000.</em>",
-  "home.lede": "Cinq parties, dans l'ordre. Ce que co\u00fbte la d\u00e9tention de liquidit\u00e9s dans le temps. La taille qu'une position crypto doit atteindre pour modifier le r\u00e9sultat d'un portefeuille. L'ampleur des chutes sur le chemin des valorisations envisag\u00e9es. Le lien historique entre sentiment de march\u00e9 et cours. Et le financement des soci\u00e9t\u00e9s cot\u00e9es d\u00e9tenant de la crypto \u00e0 leur bilan.",
+  "home.lede": "Cinq chapitres, expliquant les concepts puis les donn\u00e9es au jour le jour. Ce que co\u00fbte dans le temps la d\u00e9tention de liquidit\u00e9s non investies. La taille qu'un investissement en bitcoin et ethereum doit atteindre pour am\u00e9liorer le rendement d'un portefeuille sans faire exploser les risques. L'ampleur des chutes sur le chemin des valorisations envisag\u00e9es. Le lien historique entre sentiment de march\u00e9 et cours. Et le financement des soci\u00e9t\u00e9s cot\u00e9es d\u00e9tenant de la crypto \u00e0 leur bilan.",
   "home.start": "Commencer \u2192",
   "home.tick.eth": "Ether",
   "home.tick.btc": "Bitcoin",
@@ -376,7 +376,7 @@ fr: {
   "home.c4.t": "Sentiment",
   "home.c4.d": "Une jauge de la peur et de l'avidit\u00e9 du march\u00e9, quotidienne depuis 2018, trac\u00e9e face au cours. Le constat est constant : les meilleurs rendements ont \u00e9t\u00e9 achet\u00e9s pendant les p\u00e9riodes les plus inconfortables. Ce qui en d\u00e9coule, et quand r\u00e9duire l'exposition.",
   "home.c5.t": "Sociétés de trésorerie",
-  "home.c5.d": "Certaines soci\u00e9t\u00e9s cot\u00e9es d\u00e9tiennent de la crypto \u00e0 leur bilan et gu\u00e8re autre chose, et leurs actions s'\u00e9changent comme les autres. Il arrive que le march\u00e9 les valorise sous la crypto d\u00e9tenue. Pourquoi cela se produit, pourquoi l'emprunt est la construction la plus risqu\u00e9e, et une soci\u00e9t\u00e9 suivie en d\u00e9tail.",
+  "home.c5.d": "Certaines soci\u00e9t\u00e9s cot\u00e9es en bourse d\u00e9tiennent des bitcoin ou des ethereum \u00e0 leur bilan, et leurs actions s'\u00e9changent comme les autres. Que se passe-t-il quand le march\u00e9 les valorise au-dessous ou au-dessus de la valeur de la crypto d\u00e9tenue ? Pourquoi cela se produit, et quels sont les risques et les opportunit\u00e9s que cela repr\u00e9sente.",
   "home.read": "Lire",
 
   /* ---- thesis --------------------------------------------------------- */
