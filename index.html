@@ -67,12 +67,13 @@ const CARDS = [
   ["02","allocation.html","home.c2.t","home.c2.d","#a78bfa"],
   ["03","path.html","home.c3.t","home.c3.d","var(--btc)"],
   ["04","sentiment.html","home.c4.t","home.c4.d","var(--neutral)"],
-  ["05","sbet.html","home.c5.t","home.c5.d","var(--sbet)"]
+  ["05","sbet.html","home.c5.t","home.c5.d","var(--sbet)"],
+  ["06","case.html","home.c6.t","home.c6.d","var(--sbet)"]
 ];
 
 function cards(){
   document.getElementById("cards").innerHTML = CARDS.map(([n,href,tk,dk,col],i)=>
-    `<a class="card${i===4?" wide":""}" href="${href}">`+
+    `<a class="card" href="${href}">`+
       `<span class="bar" style="background:${col}"></span>`+
       `<span class="n">${n}</span>`+
       `<h3>${t(tk)}</h3><p>${t(dk)}</p>`+

@@ -12,7 +12,8 @@ const PAGES = [
   { id: "allocation", href: "allocation.html", n: "02", key: "nav.allocation" },
   { id: "path",       href: "path.html",       n: "03", key: "nav.path" },
   { id: "sentiment",  href: "sentiment.html",  n: "04", key: "nav.sentiment" },
-  { id: "sbet",       href: "sbet.html",       n: "05", key: "nav.sbet" }
+  { id: "sbet",       href: "sbet.html",       n: "05", key: "nav.sbet" },
+  { id: "case",       href: "case.html",       n: "06", key: "nav.case" }
 ];
 
 /* ---------------------------------------------------------------- formatting */
