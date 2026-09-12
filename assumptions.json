@@ -3,26 +3,57 @@
   "authored": "2026-09-12",
   "horizon_year": 2030,
   "cases": {
-    "base": { "btc_usd": 200000, "eth_usd": 10000, "ethbtc": 0.050 },
-    "bull": { "btc_usd": 500000, "eth_usd": 25000, "ethbtc": 0.050 }
+    "base": {
+      "btc_usd": 250000,
+      "eth_usd": 12500,
+      "ethbtc": 0.05
+    },
+    "bull": {
+      "btc_usd": 500000,
+      "eth_usd": 25000,
+      "ethbtc": 0.05
+    },
+    "_comment": "bull is the thesis target; base is exactly half of it. Note that half of a 6x is still a 3x \u2014 this is the less optimistic path, not a downside scenario. The genuinely bad outcome is modelled on the allocation page instead."
   },
   "ethbtc_reference": {
     "_comment": "Historical ETH/BTC averages. Not auto-refreshed: the free CoinGecko window is 365 days, too short to compute a 10-year mean. The live ratio IS refreshed and shown beside these.",
     "as_of": "2026-08-15",
-    "avg_2022": 0.070,
+    "avg_2022": 0.07,
     "avg_2023": 0.063,
     "avg_10y": 0.044,
-    "target": 0.050
+    "target": 0.05
   },
   "allocation_example": {
     "_comment": "A HYPOTHETICAL worked example, not anyone's portfolio. Defaults only; the page lets the reader change every number and keeps their edits in their own browser.",
     "total": 100000,
     "monthly": 500,
     "positions": [
-      { "id": "trad",  "amount": 45000, "rate": 0.0125, "monthly": 0 },
-      { "id": "digi",  "amount": 45000, "rate": 0.0200, "monthly": 425 },
-      { "id": "eth",   "amount": 10000, "rate": 0.0250, "monthly": 0,  "kind": "eth" },
-      { "id": "btc",   "amount": 0,     "rate": 0,      "monthly": 75, "kind": "btc" }
+      {
+        "id": "trad",
+        "amount": 45000,
+        "rate": 0.0125,
+        "monthly": 0
+      },
+      {
+        "id": "digi",
+        "amount": 45000,
+        "rate": 0.02,
+        "monthly": 425
+      },
+      {
+        "id": "eth",
+        "amount": 10000,
+        "rate": 0.025,
+        "monthly": 0,
+        "kind": "eth"
+      },
+      {
+        "id": "btc",
+        "amount": 0,
+        "rate": 0,
+        "monthly": 75,
+        "kind": "btc"
+      }
     ],
     "staking_yield": 0.025
   }

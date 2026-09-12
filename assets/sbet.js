@@ -252,6 +252,31 @@ function drawExplainer() {
     : "";
 }
 
+function drawTwo() {
+  $("two").innerHTML = [["debt", C.down], ["mnav", C.up]].map(([k, col]) =>
+    `<div class="case" style="border-color:${col}44">` +
+    `<div class="lbl" style="color:${col}">${t("sb.two." + k + ".t")}</div>` +
+    `<p class="note" style="margin:10px 0 0">${t("sb.two." + k + ".d")}</p></div>`).join("");
+}
+
+/* The daily table from the original dashboard. Newest first, capped so the page
+   stays usable on a phone — the full history is in data.json for anyone who wants it. */
+function drawTable() {
+  $("dhead").innerHTML = [t("sb.t.date"), t("sb.t.sbet"), t("sb.t.eth"),
+                          t("sb.t.rel"), t("sb.t.vol"), t("sb.t.mnav")]
+    .map(h => `<th>${h}</th>`).join("");
+  const rows = D.series.slice().reverse();
+  $("drows").innerHTML = rows.map(r => {
+    const col = r.rel == null ? "" : (r.rel > 0 ? C.up : C.down);
+    return `<tr><td>${S.date(r.d)}</td>` +
+      `<td>${S.usd(r.sbet, 2)}</td>` +
+      `<td>${S.usd(r.eth, 0)}</td>` +
+      `<td${col ? ` style="color:${col}"` : ""}>${r.rel == null ? "—" : S.signed(r.rel / 100, 2)}</td>` +
+      `<td>${S.num(r.vol / 1e6, 1)}M</td>` +
+      `<td>${r.mnav == null ? "—" : S.num(r.mnav, 3)}</td></tr>`;
+  }).join("");
+}
+
 function render() {
   if (!D) return;
   const st = D.stats, cf = D.config;
@@ -267,8 +292,8 @@ function render() {
   $("l-months").textContent = FR()
     ? "Le rendement mensuel de SBET moins celui de l'ether."
     : "SBET's monthly return minus ether's.";
-  drawExplainer();
-  drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold();
+  drawExplainer(); drawTwo();
+  drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold(); drawTable();
 }
 Shell.onLang(render);
 S.loadData().then(d => { D = d; render(); }).catch(e => Shell.fail($("figs"), e));

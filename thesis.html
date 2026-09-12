@@ -40,6 +40,13 @@
   <p class="lede" data-i18n="th.lede"></p>
 
   <section class="sec">
+    <h2 data-i18n="th.s0"></h2>
+    <p class="lede" data-i18n="th.s0.lede"></p>
+    <div class="grid g3" id="words" style="margin-top:16px"></div>
+    <p class="note" data-i18n="th.s0.note" style="margin-top:14px"></p>
+  </section>
+
+  <section class="sec">
     <h2 data-i18n="th.s1"></h2>
     <p class="lede" data-i18n="th.s1.lede"></p>
     <div class="strip g4" id="infl" style="margin-top:16px"></div>
@@ -104,6 +111,13 @@ const SAVINGS_RATE = 0.0125;   // typical French livret, the comparison baseline
 
 function render(){
   if(!D) return;
+
+  /* --- vocabulary, before anything that uses it --------------------------- */
+  document.getElementById("words").innerHTML = [1,2,3,4,5,6].map(i =>
+    `<div class="panel pad-sm"><div style="font-family:var(--display);font-size:15px;` +
+    `font-weight:600;margin-bottom:6px">${t("th.w"+i+".t")}</div>` +
+    `<p class="note" style="margin:0">${t("th.w"+i+".d")}</p></div>`).join("");
+
   const m = D.market || {}, h = m.hicp, st = D.stats, notes = D.notes || {};
 
   /* --- inflation -------------------------------------------------------- */

@@ -22,8 +22,10 @@ function defaults() {
     positions: ex.positions.map(p => Object.assign({}, p)),
     monthly: ex.monthly,
     years: 15,
-    gEth: null, gBtc: null,      // null = derive from the thesis targets
-    ethSpot: null, btcSpot: null  // null = live spot converted to euro
+    ethMode: "target", btcMode: "target",   // target drives, growth follows
+    ethTarget: null, btcTarget: null,       // null = the bull case from assumptions.json
+    ethGrowth: null, btcGrowth: null,
+    ethSpot: null, btcSpot: null            // null = live spot converted to euro
   };
 }
 function load() {
@@ -81,14 +83,31 @@ function spot(which) {
   const usdv = which === "eth" ? D.stats.eth_now : (D.market && D.market.btc_usd);
   return usdv ? Math.round(usdv / fx) : (which === "eth" ? 2200 : 70000);
 }
-/* Annual growth implied by the thesis target over the remaining horizon. */
-function targetRate(which, years) {
-  const fx = (D.market && D.market.eurusd && D.market.eurusd.rate) || 1.1;
-  const tgt = A.cases.bull[which + "_usd"] / fx;
-  return Math.pow(tgt / spot(which), 1 / years) - 1;
+/* Target price, annual growth and holding period are three views of the same
+   thing: fix any two and the third follows. `mode` says which of target/growth
+   the reader last set, so the other one is the derived value and moving the
+   years slider updates it rather than silently changing both. */
+const fx = () => (D.market && D.market.eurusd && D.market.eurusd.rate) || 1.1;
+const caseTarget = (which, k) => A.cases[k][which + "_usd"] / fx();
+
+function target(which) {
+  const set = P[which + "Target"];
+  if (set != null) return set;
+  return Math.round(caseTarget(which, "bull"));          // default: the bull case
 }
-const gEth = () => P.gEth != null ? P.gEth : targetRate("eth", P.years);
-const gBtc = () => P.gBtc != null ? P.gBtc : targetRate("btc", P.years);
+function growth(which) {
+  if (P[which + "Mode"] === "growth" && P[which + "Growth"] != null) return P[which + "Growth"];
+  return Math.pow(target(which) / spot(which), 1 / P.years) - 1;
+}
+/* the number shown in the target box: literal when the reader set it, derived
+   when they are driving from the growth slider instead */
+function shownTarget(which) {
+  return P[which + "Mode"] === "growth" && P[which + "Growth"] != null
+    ? spot(which) * Math.pow(1 + P[which + "Growth"], P.years)
+    : target(which);
+}
+const gEth = () => growth("eth");
+const gBtc = () => growth("btc");
 
 /* ---------------------------------------------------------------- chart */
 function drawChart(base, sim, paid, years) {
@@ -214,22 +233,55 @@ function render() {
 
   ["eth","btc"].forEach(w => {
     const g = w === "eth" ? ge : gb, col = w === "eth" ? "var(--eth)" : "var(--btc)";
-    const sp = spot(w), end = sp * Math.pow(1+g, years);
+    const sp = spot(w), end = shownTarget(w);
     const idx = P.positions.findIndex(p => p.kind === w);
+    const byTarget = P[w + "Mode"] !== "growth";
     $(w+"panel").innerHTML =
-      `<div class="field"><label for="${w}G"><span>${t("al.growth."+w)}</span>` +
-      `<b style="color:${col}">${S.signed(g,1)}</b></label>` +
-      `<input type="range" id="${w}G" min="-40" max="80" step="0.5" value="${(g*100).toFixed(1)}">` +
-      `<div class="ticks2"><span>−40 %</span><span>0 %</span><span>+80 %</span></div></div>` +
+      `<div class="ctl" style="justify-content:space-between;margin-bottom:12px">` +
+        `<span class="ctl-label">${t("al.case.load")}</span>` +
+        `<div class="seg" data-case="${w}">` +
+          `<button data-k="base">${t("common.base")}</button>` +
+          `<button data-k="bull">${t("common.bull")}</button>` +
+        `</div></div>` +
+
+      `<div class="linked">` +
+        `<div class="inp"><label for="${w}T">${t("al.target",{asset:t("common."+w)})}` +
+          (byTarget ? "" : ` <span class="drv">${t("al.derived")}</span>`) + `</label>` +
+          `<input type="number" id="${w}T" value="${Math.round(end)}" min="1" step="${w==="eth"?100:1000}"></div>` +
+        `<div class="inp"><label for="${w}S">${t("al.spot")}</label>` +
+          `<input type="number" id="${w}S" value="${Math.round(sp)}" min="1" step="${w==="eth"?10:500}"></div>` +
+      `</div>` +
+
+      `<div class="field" style="margin-top:14px"><label for="${w}G">` +
+        `<span>${t("al.growth."+w)}` +
+        (byTarget ? ` <span class="drv">${t("al.derived")}</span>` : "") + `</span>` +
+        `<b style="color:${col}">${S.signed(g,1)}</b></label>` +
+      `<input type="range" id="${w}G" min="-40" max="120" step="0.5" value="${(Math.max(-40,Math.min(120,g*100))).toFixed(1)}">` +
+      `<div class="ticks2"><span>−40 %</span><span>0 %</span><span>+120 %</span></div></div>` +
+
+      `<p class="note dim" style="margin:8px 0 0;font-size:12px">${
+        t(byTarget ? "al.link.target" : "al.link.growth", {years: t("al.years.v",{n:years})})}</p>` +
+
       `<div class="proj"><div class="from">${t("al.proj.one",{asset:t("common."+w),years:t("al.years.v",{n:years})})}</div>` +
       `<div class="price" style="color:${col}">${S.eur(end)}</div>` +
       `<div class="row"><span>${t("al.proj.spot")}</span><b>${S.eur(sp)}</b></div>` +
       `<div class="row"><span>${t("al.proj.hold")}</span><b>${S.num(act.finals[idx]/end,4)} ${w.toUpperCase()}</b></div>` +
-      `<div class="row"><span>${t("al.proj.worth")}</span><b>${S.eur(act.finals[idx])}</b></div></div>` +
-      `<div class="ctl" style="margin-top:12px"><span class="ctl-label">${t("al.spot")}</span>` +
-      `<input type="number" id="${w}S" value="${sp}" min="1" step="${w==="eth"?10:500}"></div>`;
-    $(w+"G").addEventListener("input", e => { P[w==="eth"?"gEth":"gBtc"] = +e.target.value/100; save(); render(); });
-    $(w+"S").addEventListener("input", e => { P[w+"Spot"] = Math.max(1, +e.target.value||1); save(); render(); });
+      `<div class="row"><span>${t("al.proj.worth")}</span><b>${S.eur(act.finals[idx])}</b></div></div>`;
+
+    $(w+"T").addEventListener("input", e => {
+      P[w+"Target"] = Math.max(1, +e.target.value || 1); P[w+"Mode"] = "target"; save(); render();
+    });
+    $(w+"G").addEventListener("input", e => {
+      P[w+"Growth"] = +e.target.value/100; P[w+"Mode"] = "growth"; save(); render();
+    });
+    $(w+"S").addEventListener("input", e => {
+      P[w+"Spot"] = Math.max(1, +e.target.value||1); save(); render();
+    });
+    $(w+"panel").querySelector("[data-case]").addEventListener("click", e => {
+      const b = e.target.closest("button[data-k]"); if (!b) return;
+      P[w+"Target"] = Math.round(caseTarget(w, b.dataset.k));
+      P[w+"Mode"] = "target"; save(); render();
+    });
   });
 
   /* downside */
@@ -259,7 +311,8 @@ $("scenario").addEventListener("click", e => {
 });
 $("years").addEventListener("input", e => { P.years = +e.target.value; save(); render(); });
 $("preset").addEventListener("click", () => {
-  P.gEth = null; P.gBtc = null; scenario = "sim"; save(); render();
+  ["eth","btc"].forEach(w => { P[w+"Target"] = null; P[w+"Mode"] = "target"; P[w+"Growth"] = null; });
+  scenario = "sim"; save(); render();
 });
 $("reset").addEventListener("click", () => {
   try { localStorage.removeItem(STORE); } catch (e) {}
@@ -269,7 +322,6 @@ Shell.onLang(render);
 
 S.loadData().then(d => {
   D = d; A = d.assumptions; P = load();
-  if (P.gEth == null && P.gBtc == null) { /* leave derived */ }
   render();
 }).catch(e => Shell.fail($("figs"), e));
 })();

@@ -260,6 +260,15 @@ function applyRows(next, keep) {
 }
 
 /* ---------------------------------------------------------------- chrome */
+function playbook() {
+  const cols = ["var(--fear)", "var(--neutral)", "var(--greed)", "var(--ink-3)"];
+  document.getElementById("play").innerHTML = [1,2,3,4].map(i =>
+    `<div class="panel pad-sm" style="border-left:3px solid ${cols[i-1]}">` +
+    `<div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:7px">` +
+    `${t("se.play"+i+".t")}</div><p class="note" style="margin:0">${t("se.play"+i+".d")}</p></div>`
+  ).join("");
+}
+
 function chrome() {
   const a = ASSETS[asset];
   $("h1").innerHTML = t("se.h1", {asset: t(a.key)});
@@ -272,6 +281,7 @@ function chrome() {
     `&nbsp;${t("se.legend.index")}</span>`;
   $("hint").textContent = zoomOK ? t("se.hint") : "";
   [...$("assetseg").children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.asset === asset)));
+  playbook();
   ticks();
 }
 function stamp(ok) {
