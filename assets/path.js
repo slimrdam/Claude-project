@@ -277,10 +277,13 @@ const MM = { l: 46, r: 14, t: 14, b: 26 }, MW = 920;
 
 function momX(n, i, w) { return MM.l + (n < 2 ? 0 : i / (n - 1) * w); }
 
-function momLabels(months, w, h, every) {
+/* Roughly eight labels, always a whole number of years apart, and always
+   including the last month so the reader can see where the series ends. */
+function momLabels(months, w, h) {
+  const n = months.length, every = Math.max(12, Math.ceil(n / 8 / 12) * 12);
   let g = "";
-  for (let i = 0; i < months.length; i += every) {
-    g += `<text class="axis" x="${momX(months.length, i, w).toFixed(1)}" y="${h - 8}" ` +
+  for (let i = n - 1; i >= 0; i -= every) {
+    g += `<text class="axis" x="${momX(n, i, w).toFixed(1)}" y="${h - 8}" ` +
          `text-anchor="middle">${months[i].slice(0, 4)}</text>`;
   }
   return g;
@@ -307,7 +310,7 @@ function drawMacd(m) {
     (i ? "L" : "M") + momX(n, i, w).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
   g += `<path d="${path(m.macd)}" fill="none" stroke="${COL[asset]}" stroke-width="1.8"/>`;
   g += `<path d="${path(m.signal)}" fill="none" stroke="var(--ink-3)" stroke-width="1.4" stroke-dasharray="4 3"/>`;
-  g += momLabels(m.months, w, H, Math.max(12, Math.round(n / 14) * 12));
+  g += momLabels(m.months, w, H);
   $("macd").innerHTML = g;
   $("macdkey").innerHTML =
     `<span class="lg"><span class="dash" style="background:#2ec27e"></span>${t("pa.macd.up")}</span>` +
@@ -326,20 +329,30 @@ function drawRsi(m) {
   const H = 200, w = MW - MM.l - MM.r, h = H - MM.t - MM.b;
   const n = m.months.length;
   const lo = rsiLo(m), hi = rsiHi(m);
-  const Y = v => MM.t + h - v / 100 * h;
+  /* Fit the axis to the readings. Drawing 0 to 100 would spend two thirds of the
+     height on a range this asset has never entered, and turn the lower band into
+     a slab rather than a band. */
+  const vals = m.rsi.filter(v => v != null);
+  const dMin = Math.max(0, Math.floor((Math.min.apply(null, vals) - 5) / 5) * 5);
+  const dMax = Math.min(100, Math.ceil((Math.max.apply(null, vals) + 4) / 5) * 5);
+  const Y = v => MM.t + h - (v - dMin) / (dMax - dMin) * h;
   let g = "";
   /* the bands are shaded rather than ruled: the point is how long price spends
      inside one, not the moment it touches the edge */
-  g += `<rect x="${MM.l}" y="${Y(lo).toFixed(1)}" width="${w}" height="${(Y(0) - Y(lo)).toFixed(1)}" ` +
-       `fill="#2ec27e" opacity=".08"/>`;
-  g += `<rect x="${MM.l}" y="${Y(100).toFixed(1)}" width="${w}" height="${(Y(hi) - Y(100)).toFixed(1)}" ` +
-       `fill="#ef5350" opacity=".08"/>`;
-  [0, lo, 50, hi, 100].forEach(v => {
+  g += `<rect x="${MM.l}" y="${Y(lo).toFixed(1)}" width="${w}" ` +
+       `height="${(Y(dMin) - Y(lo)).toFixed(1)}" fill="#2ec27e" opacity=".1"/>`;
+  g += `<rect x="${MM.l}" y="${Y(dMax).toFixed(1)}" width="${w}" ` +
+       `height="${(Y(hi) - Y(dMax)).toFixed(1)}" fill="#ef5350" opacity=".1"/>`;
+  /* label the two bands and the midpoint, dropping any tick that would collide */
+  const ticks = [dMin, lo, 50, hi, dMax].filter((v, i, a) => a.indexOf(v) === i)
+    .sort((a, b) => a - b)
+    .filter((v, i, a) => i === 0 || Math.abs(Y(v) - Y(a[i - 1])) > 13);
+  ticks.forEach(v => {
     const band = v === lo || v === hi;
     g += `<line class="gl" x1="${MM.l}" x2="${MM.l + w}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"` +
          `${band ? ' stroke-dasharray="3 4"' : ""}/>` +
-         `<text class="axis" x="${MM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">` +
-         `${S.num(v, 0)}</text>`;
+         `<text class="axis" x="${MM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end"` +
+         `${band ? ` fill="${v === lo ? "#2ec27e" : "#ef5350"}"` : ""}>${S.num(v, 0)}</text>`;
   });
   const pts = [];
   m.rsi.forEach((v, i) => { if (v != null) pts.push([momX(n, i, w), Y(v), m.months[i]]); });
@@ -348,7 +361,7 @@ function drawRsi(m) {
   const last = pts[pts.length - 1];
   if (last) g += `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" ` +
                  `fill="${COL[asset]}" stroke="var(--panel)" stroke-width="2"/>`;
-  g += momLabels(m.months, w, H, Math.max(12, Math.round(n / 14) * 12));
+  g += momLabels(m.months, w, H);
   $("rsi").innerHTML = g;
 }
 

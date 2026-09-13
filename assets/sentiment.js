@@ -289,11 +289,13 @@ function drawLsRatio(r) {
   const X = i => RM.l + (n < 2 ? 0 : i / (n - 1) * w);
   const col = ASSETS[asset].color;
   let g = "";
-  /* parity is the only line that means anything on its own */
+  /* Parity is the only line that means anything on its own. The tint follows the
+     contrarian reading set out below the chart rather than the direction of the
+     bet: the crowded long side is the one with positions to be liquidated. */
   g += `<rect x="${RM.l}" y="${RM.t}" width="${w}" height="${(Y(1) - RM.t).toFixed(1)}" ` +
-       `fill="#2ec27e" opacity=".05"/>`;
+       `fill="#ef5350" opacity=".06"/>`;
   g += `<rect x="${RM.l}" y="${Y(1).toFixed(1)}" width="${w}" ` +
-       `height="${(RM.t + h - Y(1)).toFixed(1)}" fill="#ef5350" opacity=".05"/>`;
+       `height="${(RM.t + h - Y(1)).toFixed(1)}" fill="#2ec27e" opacity=".06"/>`;
   [lo, 1, hi].forEach(v => {
     g += `<line class="gl" x1="${RM.l}" x2="${RM.l + w}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"` +
          `${v === 1 ? ' stroke-dasharray="3 4"' : ""}/>` +
@@ -305,16 +307,20 @@ function drawLsRatio(r) {
   const li = n - 1;
   g += `<circle cx="${X(li).toFixed(1)}" cy="${Y(vals[li]).toFixed(1)}" r="4.5" fill="${col}" ` +
        `stroke="var(--panel)" stroke-width="2"/>`;
-  const every = Math.max(1, Math.round(n / 7));
+  /* the end labels are anchored inwards so neither is clipped by the viewBox */
+  const every = Math.max(1, Math.round(n / 6));
   for (let i = 0; i < n; i += every) {
-    g += `<text class="axis" x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">` +
+    const at = i === 0 ? "start" : (i + every >= n ? "end" : "middle");
+    g += `<text class="axis" x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="${at}">` +
          `${Shell.date(r.series[i][0])}</text>`;
   }
   document.getElementById("lsratio").innerHTML = g;
   document.getElementById("lskey").innerHTML =
     `<span class="lg"><span class="dash" style="background:${col}"></span>` +
     `${t("se.r.legend", {asset: t(ASSETS[asset].key)})}</span>` +
-    `<span class="lg"><span class="dash" style="background:var(--ink-3)"></span>${t("se.r.parity")}</span>`;
+    `<span class="lg"><span class="dash" style="background:var(--ink-3)"></span>${t("se.r.parity")}</span>` +
+    `<span class="lg"><span class="dash" style="background:#ef5350;opacity:.5"></span>${t("se.r.band.long")}</span>` +
+    `<span class="lg"><span class="dash" style="background:#2ec27e;opacity:.5"></span>${t("se.r.band.short")}</span>`;
 }
 
 function retail() {
