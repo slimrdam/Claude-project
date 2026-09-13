@@ -529,7 +529,15 @@ def build_momentum(prev):
             closes = [c for _, c in m]
             logs = [math.log(c) for c in closes]
             line, signal, hist = macd(logs)
+            # The textbook 30 and 70 belong to a daily chart. Monthly, neither
+            # asset has ever printed below 40, so a fixed band would mark nothing
+            # at all. The bands are the asset's own tenth and ninetieth
+            # percentile instead, which is where it has actually turned.
+            rv = sorted(v for v in rsi(closes) if v is not None)
+            pct = lambda q: round(rv[min(len(rv) - 1, int(q * len(rv)))], 1) if rv else None
             out[key] = {
+                "rsi_lo": pct(0.10),
+                "rsi_hi": pct(0.90),
                 "months": [d for d, _ in m],
                 "close": [round(c, 2) for c in closes],
                 "macd": [round(v, 5) for v in line],

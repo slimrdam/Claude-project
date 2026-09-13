@@ -316,21 +316,30 @@ function drawMacd(m) {
     `<span class="lg"><span class="dash" style="background:var(--ink-3)"></span>${t("pa.macd.sig")}</span>`;
 }
 
+/* The conventional 30 and 70 are daily-chart levels: on monthly closes neither
+   asset has ever printed below 40, so a fixed band would mark nothing. The
+   builder supplies each asset's own tenth and ninetieth percentile instead. */
+const rsiLo = m => m.rsi_lo != null ? m.rsi_lo : 30;
+const rsiHi = m => m.rsi_hi != null ? m.rsi_hi : 70;
+
 function drawRsi(m) {
   const H = 200, w = MW - MM.l - MM.r, h = H - MM.t - MM.b;
   const n = m.months.length;
+  const lo = rsiLo(m), hi = rsiHi(m);
   const Y = v => MM.t + h - v / 100 * h;
   let g = "";
-  /* the oversold band is shaded rather than ruled: the point is how long price
-     spends inside it, not the moment it touches the line */
-  g += `<rect x="${MM.l}" y="${Y(30).toFixed(1)}" width="${w}" height="${(Y(0) - Y(30)).toFixed(1)}" ` +
-       `fill="#2ec27e" opacity=".07"/>`;
-  g += `<rect x="${MM.l}" y="${Y(100).toFixed(1)}" width="${w}" height="${(Y(70) - Y(100)).toFixed(1)}" ` +
-       `fill="#ef5350" opacity=".07"/>`;
-  [0, 30, 50, 70, 100].forEach(v => {
+  /* the bands are shaded rather than ruled: the point is how long price spends
+     inside one, not the moment it touches the edge */
+  g += `<rect x="${MM.l}" y="${Y(lo).toFixed(1)}" width="${w}" height="${(Y(0) - Y(lo)).toFixed(1)}" ` +
+       `fill="#2ec27e" opacity=".08"/>`;
+  g += `<rect x="${MM.l}" y="${Y(100).toFixed(1)}" width="${w}" height="${(Y(hi) - Y(100)).toFixed(1)}" ` +
+       `fill="#ef5350" opacity=".08"/>`;
+  [0, lo, 50, hi, 100].forEach(v => {
+    const band = v === lo || v === hi;
     g += `<line class="gl" x1="${MM.l}" x2="${MM.l + w}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"` +
-         `${v === 30 || v === 70 ? ' stroke-dasharray="3 4"' : ""}/>` +
-         `<text class="axis" x="${MM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${v}</text>`;
+         `${band ? ' stroke-dasharray="3 4"' : ""}/>` +
+         `<text class="axis" x="${MM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">` +
+         `${S.num(v, 0)}</text>`;
   });
   const pts = [];
   m.rsi.forEach((v, i) => { if (v != null) pts.push([momX(n, i, w), Y(v), m.months[i]]); });
@@ -346,9 +355,10 @@ function drawRsi(m) {
 /* The longest unbroken run below 30 tells the reader what "prolonged" means in
    months rather than as an adjective. */
 function longestOversold(m) {
-  let best = 0, run = 0, endAt = null, bestEnd = null;
+  const lo = rsiLo(m);
+  let best = 0, run = 0, bestEnd = null;
   m.rsi.forEach((v, i) => {
-    if (v != null && v < 30) { run++; endAt = m.months[i]; if (run > best) { best = run; bestEnd = endAt; } }
+    if (v != null && v <= lo) { run++; if (run > best) { best = run; bestEnd = m.months[i]; } }
     else run = 0;
   });
   return { months: best, end: bestEnd };
@@ -374,15 +384,16 @@ function momentum() {
     cell(t("pa.mom.phase"), t(hist >= 0 ? "pa.mom.green" : "pa.mom.red"),
          t("pa.mom.run", {n: run}), hist >= 0 ? "#2ec27e" : "#ef5350") +
     cell(t("pa.mom.rsi"), S.num(r, 0),
-         t(r < 30 ? "pa.mom.oversold" : r > 70 ? "pa.mom.overbought" : "pa.mom.mid"),
-         r < 30 ? "#2ec27e" : r > 70 ? "#ef5350" : "") +
+         t(r <= rsiLo(m) ? "pa.mom.oversold" : r >= rsiHi(m) ? "pa.mom.overbought" : "pa.mom.mid"),
+         r <= rsiLo(m) ? "#2ec27e" : r >= rsiHi(m) ? "#ef5350" : "") +
     cell(t("pa.mom.long"), t("pa.mom.months", {n: os.months}),
          os.end ? t("pa.mom.ending", {when: os.end}) : "—");
   $("momnote").textContent = t("pa.mom.note", {
     asset: label, n: m.months.length,
     from: m.months[0], run: run,
     phase: t(hist >= 0 ? "pa.mom.green" : "pa.mom.red").toLowerCase()});
-  $("momsrc").textContent = t("pa.mom.src", {source: (D.momentum.source || "")});
+  $("momsrc").textContent = t("pa.mom.src", {source: (D.momentum.source || "")}) + " " +
+    t("pa.rsi.bands", {lo: S.num(rsiLo(m), 0), hi: S.num(rsiHi(m), 0), asset: label});
 }
 
 function setMode(m) {
