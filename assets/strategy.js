@@ -111,8 +111,6 @@ function drawStrc() {
     `<span>+15 %<b>${t("st.par.dear")}</b></span></div>`;
   $("strcread").textContent = t(gap <= 0 ? "st.strc.read.below" : "st.strc.read.above",
     {price: S.usd(st.price, 2), par: S.usd(par, 0), gap: S.pct(Math.abs(gap), 1)});
-  $("strcsrc").textContent = t("common.editorial") + " · " +
-    (FR() ? f.g.strc_note_fr : f.g.strc_note);
 }
 
 /* What it would actually take to force a sale, priced out rather than asserted. */
