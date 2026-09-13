@@ -20,6 +20,8 @@ let chart = null, zoomOK = false, fng = null, asset = "ETH";
 const priceCache = {};
 let rows = [], fullMin = null, fullMax = null, currentScale = "logarithmic";
 let lastRefresh = 0, busy = false, autoOn = true, autoTimer = null;
+/* the nightly file, for the positioning panel; the price chart is live */
+let DATA = null;
 
 /* ---------------------------------------------------------------- helpers */
 const floorDay = ms => Math.floor(ms / DAY) * DAY;
@@ -269,6 +271,86 @@ function playbook() {
   ).join("");
 }
 
+/* ----------------------------------------------------- retail positioning */
+/* The ratio of accounts holding longs to accounts holding shorts. Above 1 the
+   crowd is leaning long, below 1 short. It is read as a contrarian gauge: the
+   more one-sided it gets, the more positions there are to be liquidated in the
+   direction nobody is placed for. */
+const RM = { l: 44, r: 14, t: 14, b: 26 };
+
+function drawLsRatio(r) {
+  const W = 920, H = 230, w = W - RM.l - RM.r, h = H - RM.t - RM.b;
+  const n = r.series.length;
+  const vals = r.series.map(p => p[1]);
+  const hi = Math.max(Math.max.apply(null, vals), 1.2);
+  const lo = Math.min(Math.min.apply(null, vals), 0.8);
+  const pad = (hi - lo) * 0.1;
+  const Y = v => RM.t + h - (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * h;
+  const X = i => RM.l + (n < 2 ? 0 : i / (n - 1) * w);
+  const col = ASSETS[asset].color;
+  let g = "";
+  /* parity is the only line that means anything on its own */
+  g += `<rect x="${RM.l}" y="${RM.t}" width="${w}" height="${(Y(1) - RM.t).toFixed(1)}" ` +
+       `fill="#2ec27e" opacity=".05"/>`;
+  g += `<rect x="${RM.l}" y="${Y(1).toFixed(1)}" width="${w}" ` +
+       `height="${(RM.t + h - Y(1)).toFixed(1)}" fill="#ef5350" opacity=".05"/>`;
+  [lo, 1, hi].forEach(v => {
+    g += `<line class="gl" x1="${RM.l}" x2="${RM.l + w}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"` +
+         `${v === 1 ? ' stroke-dasharray="3 4"' : ""}/>` +
+         `<text class="axis" x="${RM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">` +
+         `${Shell.num(v, 2)}</text>`;
+  });
+  g += `<path d="${r.series.map((p, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ")}" ` +
+       `fill="none" stroke="${col}" stroke-width="1.8"/>`;
+  const li = n - 1;
+  g += `<circle cx="${X(li).toFixed(1)}" cy="${Y(vals[li]).toFixed(1)}" r="4.5" fill="${col}" ` +
+       `stroke="var(--panel)" stroke-width="2"/>`;
+  const every = Math.max(1, Math.round(n / 7));
+  for (let i = 0; i < n; i += every) {
+    g += `<text class="axis" x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">` +
+         `${Shell.date(r.series[i][0])}</text>`;
+  }
+  document.getElementById("lsratio").innerHTML = g;
+  document.getElementById("lskey").innerHTML =
+    `<span class="lg"><span class="dash" style="background:${col}"></span>` +
+    `${t("se.r.legend", {asset: t(ASSETS[asset].key)})}</span>` +
+    `<span class="lg"><span class="dash" style="background:var(--ink-3)"></span>${t("se.r.parity")}</span>`;
+}
+
+function retail() {
+  const R = DATA && DATA.retail, r = R && R[asset.toLowerCase()];
+  const box = document.getElementById("retail");
+  if (!box) return;
+  if (!r || !r.series || r.series.length < 5) {
+    box.innerHTML = ""; document.getElementById("lsratio").innerHTML = "";
+    document.getElementById("retailread").textContent = ""; return;
+  }
+  const long = r.now > 1, skew = Math.abs(r.now - 1);
+  /* where this reading sits inside its own range, so "crowded" is measured
+     against how one-sided this market actually gets rather than asserted */
+  const pos = (r.now - r.lo) / ((r.hi - r.lo) || 1);
+  box.innerHTML =
+    cell(t("se.r.now"), Shell.num(r.now, 2),
+         t(long ? "se.r.long" : "se.r.short"), long ? "#2ec27e" : "#ef5350") +
+    cell(t("se.r.avg"), Shell.num(r.avg, 2), t("se.r.avg.x", {n: r.series.length})) +
+    cell(t("se.r.range"), Shell.num(r.lo, 2) + " – " + Shell.num(r.hi, 2),
+         t("se.r.range.x", {pct: Shell.pct(pos, 0)})) +
+    cell(t("se.r.fund"), Shell.signed(r.funding_now, 1),
+         t(r.funding_now >= 0 ? "se.r.fund.pos" : "se.r.fund.neg"),
+         r.funding_now >= 0 ? "#2ec27e" : "#ef5350");
+  drawLsRatio(r);
+  document.getElementById("retailread").textContent = t(
+    skew < 0.15 ? "se.r.read.flat" : long ? "se.r.read.long" : "se.r.read.short",
+    {asset: t(ASSETS[asset].key), now: Shell.num(r.now, 2), avg: Shell.num(r.avg, 2),
+     pct: Shell.pct(pos, 0), fund: Shell.signed(r.funding_now, 1)});
+  document.getElementById("squeeze").innerHTML = [["long", "#ef5350"], ["short", "#2ec27e"]]
+    .map(([k, c]) => `<div class="case" style="border-color:${c}44">` +
+      `<div class="lbl" style="color:${c}">${t("se.r." + k + ".t")}</div>` +
+      `<p class="note" style="margin:10px 0 0">${t("se.r." + k + ".d")}</p></div>`).join("");
+  document.getElementById("retailsrc").textContent =
+    t("se.r.src", {source: R.source || ""}) + (R.as_of ? " · " + Shell.date(R.as_of) : "");
+}
+
 function chrome() {
   const a = ASSETS[asset];
   $("h1").innerHTML = t("se.h1", {asset: t(a.key)});
@@ -283,6 +365,7 @@ function chrome() {
   [...$("assetseg").children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.asset === asset)));
   playbook();
   ticks();
+  retail();
 }
 /* Auto-refresh still runs; it simply is not advertised in the interface. */
 function stamp(ok) { if (ok !== false) lastRefresh = Date.now(); }
@@ -347,6 +430,7 @@ Shell.onLang(() => { chrome(); if (chart) chart.update("none"); });
 
 async function boot() {
   chrome();
+  Shell.loadData().then(d => { DATA = d; retail(); }).catch(() => {});
   showOverlay(t("se.pulling"), false);
   if (typeof Chart === "undefined") { showOverlay(t("common.error"), true); return; }
   try {

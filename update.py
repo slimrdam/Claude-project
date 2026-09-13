@@ -14,7 +14,7 @@ Exits non-zero on any failure so a scheduled job goes red instead of publishing 
 or half-built data.
 """
 
-import argparse, csv, datetime as dt, json, os, pathlib, sys, time
+import argparse, csv, datetime as dt, json, math, os, pathlib, sys, time
 import urllib.parse
 import requests
 
@@ -446,6 +446,153 @@ def fetch_short_interest(ticker):
             "history": hist}
 
 
+# ---------------------------------------------------------------- momentum
+# Monthly momentum needs years of history, and the feeds already in this file do
+# not go back far enough: CoinGecko's free window is 365 days and stockanalysis
+# has no crypto. Bitstamp's public OHLC pages backwards without a key - probed
+# from a runner at 5,506 daily rows for BTC (2011) and 3,316 for ETH (2017).
+
+BITSTAMP = "https://www.bitstamp.net/api/v2/ohlc/{pair}/?step=86400&limit=1000"
+
+
+def fetch_daily_ohlc(pair, max_calls=7):
+    """Daily candles, newest page first, walking backwards until a page repeats."""
+    out, end, oldest = {}, None, None
+    for _ in range(max_calls):
+        url = BITSTAMP.format(pair=pair) + (f"&end={end}" if end else "")
+        rows = get(url).json()["data"]["ohlc"]
+        if not rows:
+            break
+        for r in rows:
+            out[int(r["timestamp"])] = float(r["close"])
+        lo = min(int(r["timestamp"]) for r in rows)
+        if oldest is not None and lo >= oldest:
+            break
+        oldest, end = lo, lo - 86400
+    if len(out) < 400:
+        raise RuntimeError(f"{pair}: only {len(out)} daily candles")
+    return sorted(out.items())
+
+
+def to_monthly(daily):
+    """Calendar-month closes: the last daily close inside each month."""
+    months = {}
+    for ts, close in daily:
+        d = dt.datetime.fromtimestamp(ts, dt.timezone.utc)
+        months[f"{d.year:04d}-{d.month:02d}"] = close
+    return sorted(months.items())
+
+
+def _ema(vals, n):
+    k, out, prev = 2 / (n + 1), [], None
+    for v in vals:
+        prev = v if prev is None else v * k + prev * (1 - k)
+        out.append(prev)
+    return out
+
+
+def macd(vals, fast=12, slow=26, sig=9):
+    f, s = _ema(vals, fast), _ema(vals, slow)
+    line = [a - b for a, b in zip(f, s)]
+    signal = _ema(line, sig)
+    return line, signal, [a - b for a, b in zip(line, signal)]
+
+
+def rsi(vals, n=14):
+    """Wilder's RSI. The first n periods have no reading and come back as None."""
+    out = [None] * len(vals)
+    if len(vals) <= n:
+        return out
+    gains = [max(vals[i] - vals[i-1], 0) for i in range(1, len(vals))]
+    losses = [max(vals[i-1] - vals[i], 0) for i in range(1, len(vals))]
+    ag = sum(gains[:n]) / n
+    al = sum(losses[:n]) / n
+    out[n] = 100.0 if al == 0 else 100 - 100 / (1 + ag / al)
+    for i in range(n, len(gains)):
+        ag = (ag * (n - 1) + gains[i]) / n
+        al = (al * (n - 1) + losses[i]) / n
+        out[i + 1] = 100.0 if al == 0 else 100 - 100 / (1 + ag / al)
+    return out
+
+
+def build_momentum(prev):
+    """MACD on the log of the monthly close, and RSI on the close itself.
+
+    An asset that has moved four orders of magnitude cannot be read on a linear
+    MACD: the 2013 crossovers would be invisible beside the 2025 ones. Taking the
+    log first makes a crossover mean the same thing at every price level, which
+    is the whole point of reading it monthly."""
+    out, stale = {}, []
+    for key, pair in (("btc", "btcusd"), ("eth", "ethusd")):
+        try:
+            m = to_monthly(fetch_daily_ohlc(pair))
+            closes = [c for _, c in m]
+            logs = [math.log(c) for c in closes]
+            line, signal, hist = macd(logs)
+            out[key] = {
+                "months": [d for d, _ in m],
+                "close": [round(c, 2) for c in closes],
+                "macd": [round(v, 5) for v in line],
+                "signal": [round(v, 5) for v in signal],
+                "hist": [round(v, 5) for v in hist],
+                "rsi": [None if v is None else round(v, 1) for v in rsi(closes)],
+            }
+        except Exception as e:
+            print(f"warn: momentum {key} failed ({e})", file=sys.stderr)
+            if prev.get("momentum", {}).get(key):
+                out[key] = prev["momentum"][key]
+                stale.append(key)
+    out["stale"] = stale
+    out["source"] = "bitstamp.net"
+    return out
+
+
+# ---------------------------------------------------------------- positioning
+# Who is leveraged which way. Binance answers 451 to a US runner and Bybit 403,
+# both geo-blocks; OKX answers plainly and publishes the ratio of accounts
+# holding longs to accounts holding shorts, which is the retail-crowd reading.
+
+OKX = "https://www.okx.com/api/v5"
+
+
+def _okx(path):
+    j = get(OKX + path, headers={"Accept": "application/json"}).json()
+    if str(j.get("code")) != "0":
+        raise RuntimeError(f"okx {path}: {j.get('msg')}")
+    return j["data"]
+
+
+def build_retail(prev):
+    out, stale = {}, []
+    for key, ccy, inst in (("btc", "BTC", "BTC-USDT-SWAP"), ("eth", "ETH", "ETH-USDT-SWAP")):
+        try:
+            rows = _okx(f"/rubik/stat/contracts/long-short-account-ratio?ccy={ccy}&period=1D")
+            series = sorted(
+                (_iso(dt.datetime.fromtimestamp(int(t) / 1000, dt.timezone.utc)), round(float(v), 3))
+                for t, v in rows)
+            fr = _okx(f"/public/funding-rate-history?instId={inst}&limit=100")
+            rates = [float(r["fundingRate"]) for r in fr]
+            out[key] = {
+                "series": series,
+                "now": series[-1][1],
+                "avg": round(sum(v for _, v in series) / len(series), 3),
+                "hi": max(v for _, v in series),
+                "lo": min(v for _, v in series),
+                # funding is paid three times a day; annualise so it reads as a rate
+                "funding": round(sum(rates) / len(rates) * 3 * 365, 4),
+                "funding_now": round(rates[0] * 3 * 365, 4),
+            }
+        except Exception as e:
+            print(f"warn: retail {key} failed ({e})", file=sys.stderr)
+            if prev.get("retail", {}).get(key):
+                out[key] = prev["retail"][key]
+                stale.append(key)
+    out["stale"] = stale
+    out["source"] = "okx.com"
+    out["as_of"] = _iso(_today())
+    return out
+
+
 def build_market(prev, eth_now, btc_now, ethbtc, sl=None):
     """Assemble the market block, keeping the last good value for anything that fails."""
     old = prev.get("market", {})
@@ -703,6 +850,8 @@ def main():
         round(r_last["eth"] / r_last["eb"], 2) if r_last.get("eb") else None,
         r_last.get("eb"), sl)
     data["assumptions"] = json.loads((ROOT / "assumptions.json").read_text())
+    data["momentum"] = build_momentum(prev)
+    data["retail"] = build_retail(prev)
     s = data["stats"]
     print(f"  ratio {s['ri_now']} (low {s['low_ri']} on {s['low_d']}, "
           f"prior tops {s['prior_tops']}) | mNAV {s['mnav_now']} | "
@@ -710,6 +859,19 @@ def main():
     mk = data["market"]
     print(f"  market: eur/usd {mk.get('eurusd')} | fng {mk.get('fng')} | "
           f"stables {mk.get('stables')} | tvl {mk.get('tvl')}")
+    mo, re = data["momentum"], data["retail"]
+    for k in ("btc", "eth"):
+        if mo.get(k):
+            print(f"  momentum {k}: {len(mo[k]['months'])} months "
+                  f"{mo[k]['months'][0]}..{mo[k]['months'][-1]} | "
+                  f"rsi {mo[k]['rsi'][-1]} | hist {mo[k]['hist'][-1]:+.4f}")
+        if re.get(k):
+            print(f"  retail {k}: long/short {re[k]['now']} "
+                  f"(180d avg {re[k]['avg']}, {re[k]['lo']}..{re[k]['hi']}) | "
+                  f"funding {re[k]['funding_now']:+.2%} annualised")
+    for blk, name in ((mo, "momentum"), (re, "retail")):
+        if blk.get("stale"):
+            print(f"  WARNING: reused previous {name} for {', '.join(blk['stale'])}")
     if mk["stale"]:
         print(f"  WARNING: reused previous values for {', '.join(mk['stale'])}")
     if data["config"]["stale"]:

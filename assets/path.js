@@ -269,6 +269,122 @@ function driftBox() {
 }
 
 /* ---------------------------------------------------------------- wiring */
+/* ------------------------------------------------------- monthly momentum */
+/* Both panels are drawn from monthly closes computed in the nightly job, so the
+   page only has to lay them out. MACD is taken on the log of the close: an asset
+   that has moved four orders of magnitude cannot be read on a linear one. */
+const MM = { l: 46, r: 14, t: 14, b: 26 }, MW = 920;
+
+function momX(n, i, w) { return MM.l + (n < 2 ? 0 : i / (n - 1) * w); }
+
+function momLabels(months, w, h, every) {
+  let g = "";
+  for (let i = 0; i < months.length; i += every) {
+    g += `<text class="axis" x="${momX(months.length, i, w).toFixed(1)}" y="${h - 8}" ` +
+         `text-anchor="middle">${months[i].slice(0, 4)}</text>`;
+  }
+  return g;
+}
+
+function drawMacd(m) {
+  const H = 240, w = MW - MM.l - MM.r, h = H - MM.t - MM.b;
+  const n = m.months.length;
+  const all = m.macd.concat(m.signal, m.hist);
+  const hi = Math.max.apply(null, all), lo = Math.min.apply(null, all);
+  const pad = (hi - lo) * 0.08 || 1;
+  const Y = v => MM.t + h - (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * h;
+  const zero = Y(0);
+  let g = `<line class="gl" x1="${MM.l}" x2="${MM.l + w}" y1="${zero.toFixed(1)}" y2="${zero.toFixed(1)}"/>` +
+          `<text class="axis" x="${MM.l - 8}" y="${(zero + 4).toFixed(1)}" text-anchor="end">0</text>`;
+  const bw = Math.max(w / n * 0.62, 1);
+  m.hist.forEach((v, i) => {
+    const x = momX(n, i, w), y = Y(v), y0 = zero;
+    g += `<rect x="${(x - bw / 2).toFixed(1)}" y="${Math.min(y, y0).toFixed(1)}" ` +
+         `width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y0 - y), 0.8).toFixed(1)}" ` +
+         `fill="${v >= 0 ? "#2ec27e" : "#ef5350"}" opacity=".78"><title>${m.months[i]}</title></rect>`;
+  });
+  const path = vals => vals.map((v, i) =>
+    (i ? "L" : "M") + momX(n, i, w).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
+  g += `<path d="${path(m.macd)}" fill="none" stroke="${COL[asset]}" stroke-width="1.8"/>`;
+  g += `<path d="${path(m.signal)}" fill="none" stroke="var(--ink-3)" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+  g += momLabels(m.months, w, H, Math.max(12, Math.round(n / 14) * 12));
+  $("macd").innerHTML = g;
+  $("macdkey").innerHTML =
+    `<span class="lg"><span class="dash" style="background:#2ec27e"></span>${t("pa.macd.up")}</span>` +
+    `<span class="lg"><span class="dash" style="background:#ef5350"></span>${t("pa.macd.dn")}</span>` +
+    `<span class="lg"><span class="dash" style="background:${COL[asset]}"></span>${t("pa.macd.line")}</span>` +
+    `<span class="lg"><span class="dash" style="background:var(--ink-3)"></span>${t("pa.macd.sig")}</span>`;
+}
+
+function drawRsi(m) {
+  const H = 200, w = MW - MM.l - MM.r, h = H - MM.t - MM.b;
+  const n = m.months.length;
+  const Y = v => MM.t + h - v / 100 * h;
+  let g = "";
+  /* the oversold band is shaded rather than ruled: the point is how long price
+     spends inside it, not the moment it touches the line */
+  g += `<rect x="${MM.l}" y="${Y(30).toFixed(1)}" width="${w}" height="${(Y(0) - Y(30)).toFixed(1)}" ` +
+       `fill="#2ec27e" opacity=".07"/>`;
+  g += `<rect x="${MM.l}" y="${Y(100).toFixed(1)}" width="${w}" height="${(Y(70) - Y(100)).toFixed(1)}" ` +
+       `fill="#ef5350" opacity=".07"/>`;
+  [0, 30, 50, 70, 100].forEach(v => {
+    g += `<line class="gl" x1="${MM.l}" x2="${MM.l + w}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"` +
+         `${v === 30 || v === 70 ? ' stroke-dasharray="3 4"' : ""}/>` +
+         `<text class="axis" x="${MM.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${v}</text>`;
+  });
+  const pts = [];
+  m.rsi.forEach((v, i) => { if (v != null) pts.push([momX(n, i, w), Y(v), m.months[i]]); });
+  g += `<path d="${pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ")}" ` +
+       `fill="none" stroke="${COL[asset]}" stroke-width="1.8"/>`;
+  const last = pts[pts.length - 1];
+  if (last) g += `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" ` +
+                 `fill="${COL[asset]}" stroke="var(--panel)" stroke-width="2"/>`;
+  g += momLabels(m.months, w, H, Math.max(12, Math.round(n / 14) * 12));
+  $("rsi").innerHTML = g;
+}
+
+/* The longest unbroken run below 30 tells the reader what "prolonged" means in
+   months rather than as an adjective. */
+function longestOversold(m) {
+  let best = 0, run = 0, endAt = null, bestEnd = null;
+  m.rsi.forEach((v, i) => {
+    if (v != null && v < 30) { run++; endAt = m.months[i]; if (run > best) { best = run; bestEnd = endAt; } }
+    else run = 0;
+  });
+  return { months: best, end: bestEnd };
+}
+
+function momentum() {
+  const m = D && D.momentum && D.momentum[asset];
+  if (!m || !m.months || m.months.length < 30) {
+    ["macd","rsi","macdkey","momfigs"].forEach(i => { if ($(i)) $(i).innerHTML = ""; });
+    if ($("momnote")) $("momnote").textContent = "";
+    return;
+  }
+  const label = t("common." + asset);
+  $("macdTitle").textContent = t("pa.macd.t", {asset: label});
+  $("rsiTitle").textContent = t("pa.rsi.t", {asset: label});
+  drawMacd(m); drawRsi(m);
+
+  const hist = m.hist[m.hist.length - 1], r = m.rsi[m.rsi.length - 1];
+  let run = 0;
+  for (let i = m.hist.length - 1; i >= 0 && (m.hist[i] >= 0) === (hist >= 0); i--) run++;
+  const os = longestOversold(m);
+  $("momfigs").innerHTML =
+    cell(t("pa.mom.phase"), t(hist >= 0 ? "pa.mom.green" : "pa.mom.red"),
+         t("pa.mom.run", {n: run}), hist >= 0 ? "#2ec27e" : "#ef5350") +
+    cell(t("pa.mom.rsi"), S.num(r, 0),
+         t(r < 30 ? "pa.mom.oversold" : r > 70 ? "pa.mom.overbought" : "pa.mom.mid"),
+         r < 30 ? "#2ec27e" : r > 70 ? "#ef5350" : "") +
+    cell(t("pa.mom.long"), t("pa.mom.months", {n: os.months}),
+         os.end ? t("pa.mom.ending", {when: os.end}) : "—");
+  $("momnote").textContent = t("pa.mom.note", {
+    asset: label, n: m.months.length,
+    from: m.months[0], run: run,
+    phase: t(hist >= 0 ? "pa.mom.green" : "pa.mom.red").toLowerCase()});
+  $("momsrc").textContent = t("pa.mom.src", {source: (D.momentum.source || "")});
+}
+
 function setMode(m) {
   mode = m;
   $("caseseg").querySelectorAll("button").forEach(b =>
@@ -289,7 +405,7 @@ function render() {
   $("caseseg").querySelectorAll("button[data-k]").forEach(b => {
     if (b.dataset.k !== "both") b.textContent = t("common." + b.dataset.k);
   });
-  driftBox(); stats(); corrections(); ladder(); draw();
+  driftBox(); stats(); corrections(); ladder(); momentum(); draw();
 }
 
 $("assetseg").onclick = e => { const b = e.target.closest("button"); if (b) setAsset(b.dataset.a); };
