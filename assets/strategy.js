@@ -19,10 +19,6 @@ const card = (h,b,col) =>
   `<div class="panel pad-sm" style="border-left:3px solid ${col}">` +
   `<div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:7px">${h}</div>` +
   `<p class="note" style="margin:0">${b}</p></div>`;
-const two = (id, keys, prefix) => $(id).innerHTML = keys.map(([k, col]) =>
-  `<div class="case" style="border-color:${col}44">` +
-  `<div class="lbl" style="color:${col}">${t(prefix + k + ".t")}</div>` +
-  `<p class="note" style="margin:10px 0 0">${t(prefix + k + ".d")}</p></div>`).join("");
 
 /* The whole of part seven turns on one number: how much bitcoin the company holds
    against what it owes. Everything below is derived from those two. */
@@ -46,10 +42,23 @@ function drawFigs() {
          t("st.f.btc.x", {v: S.big(f.grossBn, "USD")}), C.btc) +
     cell(t("st.f.owed"), S.big(f.seniorBn, "USD"), t("st.f.owed.x"), C.down) +
     cell(t("st.f.net"), S.big(f.netBn, "USD"), t("st.f.net.x"), C.up) +
-    cell(t("st.f.cover"), f.cover == null ? "—" : S.num(f.cover, 2) + "×",
+    cell(t("st.f.cover"), f.cover == null ? "—" : S.num(f.cover, 1) + "×",
          t("st.f.cover.x"), f.cover >= 2 ? C.up : C.down);
+  $("covernote").innerHTML = t("st.f.note", {
+    cover: S.num(f.cover, 1), price: S.usd(f.breakeven, 0),
+    fall: S.pct(1 - f.breakeven / f.btcNow, 0)});
   $("figsrc").textContent = t("common.editorial") + " · " + t("st.f.src") +
     (f.g.as_of ? " · " + t("common.asof") + " " + S.date(f.g.as_of) : "");
+}
+
+/* What the company is actually for: three steps that each raise the bitcoin
+   sitting behind one share, and the one condition that has to hold. */
+function drawEngine() {
+  $("engine").innerHTML =
+    card(t("st.e.issue.t"), t("st.e.issue.d"), C.up) +
+    card(t("st.e.borrow.t"), t("st.e.borrow.d"), C.btc) +
+    card(t("st.e.hold.t"), t("st.e.hold.d"), C.ink);
+  $("enginenote").innerHTML = t("st.e.note");
 }
 
 /* Where the bitcoin goes if the company were wound up: the claims ahead of the
@@ -107,6 +116,49 @@ function drawStrc() {
 }
 
 /* What it would actually take to force a sale, priced out rather than asserted. */
+/* Three ways to end up exposed to the same bitcoin. The point is not which is
+   best but that they are different instruments: one is leveraged, one is an
+   income, one is the asset itself. */
+function drawCmp() {
+  const f = figures();
+  const lev = f.grossBn && f.netBn > 0 ? f.grossBn / f.netBn : null;
+  const strcPrice = ((D.market || {}).strc || {}).price;
+  const rows = [
+    { key: "mstr", col: C.btc, def: "mstr", cells: [
+      ["st.c.exposure", t("st.c.mstr.exposure", {x: lev ? S.num(lev, 1) : "—"})],
+      ["st.c.updown",   t("st.c.mstr.updown")],
+      ["st.c.income",   t("st.c.none")],
+      ["st.c.risk",     t("st.c.mstr.risk")],
+      ["st.c.custody",  t("st.c.broker")],
+    ]},
+    { key: "strc", col: C.up, def: "strc", cells: [
+      ["st.c.exposure", t("st.c.strc.exposure")],
+      ["st.c.updown",   t("st.c.strc.updown")],
+      ["st.c.income",   t("st.c.strc.income", {price: strcPrice ? S.usd(strcPrice, 2) : "—"})],
+      ["st.c.risk",     t("st.c.strc.risk")],
+      ["st.c.custody",  t("st.c.broker")],
+    ]},
+    { key: "btc", col: "#8b9bff", def: null, cells: [
+      ["st.c.exposure", t("st.c.btc.exposure")],
+      ["st.c.updown",   t("st.c.btc.updown")],
+      ["st.c.income",   t("st.c.none")],
+      ["st.c.risk",     t("st.c.btc.risk")],
+      ["st.c.custody",  t("st.c.btc.custody")],
+    ]},
+  ];
+  $("cmp").innerHTML = rows.map(r =>
+    `<div class="col" style="border-top:2px solid ${r.col}">` +
+    `<div class="hd">${t("st.c." + r.key + ".hd")}</div>` +
+    `<div class="nm" style="color:${r.col}">` +
+      (r.def ? `<button type="button" data-def="${r.def}">${t("st.c." + r.key + ".nm")}</button>`
+             : t("st.c." + r.key + ".nm")) + `</div>` +
+    `<p class="sub">${t("st.c." + r.key + ".sub")}</p>` +
+    r.cells.map(([k, v]) =>
+      `<div class="row"><span class="k">${t(k)}</span><span class="v">${v}</span></div>`).join("") +
+    `</div>`).join("");
+  $("cmpnote").innerHTML = t("st.c.note");
+}
+
 function drawStress() {
   const f = figures();
   const yrs = f.g.drawdown_years || 4;
@@ -131,8 +183,7 @@ function drawMitig() {
 function render() {
   if (!D) return;
   drawFigs();
-  two("papers", [["mstr", C.btc], ["strc", C.up]], "st.p.");
-  drawStack(); drawStrc(); drawStress(); drawMitig();
+  drawEngine(); drawStack(); drawCmp(); drawStrc(); drawStress(); drawMitig();
 }
 Shell.onLang(render);
 S.loadData().then(d => { D = d; render(); }).catch(e => Shell.fail($("figs"), e));

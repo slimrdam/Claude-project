@@ -42,60 +42,95 @@
   .par .ends b{display:block;font-weight:500;color:var(--ink-2);margin-top:4px;
     font-family:var(--body);font-size:12.5px;line-height:1.4}
   .par .ends span:last-child{text-align:right}
-</style>
+  /* Three ways to own the same bitcoin, side by side. The rows have to line up
+     across the columns or the table cannot be scanned, so each column is a grid
+     that inherits the parent's rows. Where subgrid is missing the columns simply
+     read as three independent cards, which is also the phone layout. */
+  .cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .cmp .col{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);
+    padding:16px}
+  .cmp .hd{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-3)}
+  .cmp .nm{font-family:var(--display);font-size:16px;font-weight:600;margin:5px 0 3px}
+  .cmp .sub{font-size:12.5px;color:var(--ink-2);margin:0;max-width:none}
+  .cmp .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+    border-top:1px solid var(--rule-soft);font-size:13px;padding-top:9px}
+  .cmp .row .k{color:var(--ink-3);flex:none}
+  .cmp .row .v{text-align:right;font-weight:500}
+  @supports (grid-template-rows: subgrid){
+    @media (min-width:821px){
+      .cmp{grid-template-rows:auto auto auto repeat(5,auto)}
+      .cmp .col{display:grid;grid-row:1/-1;grid-template-rows:subgrid;row-gap:9px;
+        align-content:start}
+      .cmp .sub{margin-bottom:3px}
+    }
+  }
+  @media (max-width:820px){
+    .cmp{grid-template-columns:1fr}
+    .cmp .sub{margin-bottom:12px}
+    .cmp .row{margin-top:9px}
+  }
+</style></style>
 </head>
 <body>
 <main class="wrap page">
   <p class="eyebrow" data-i18n="st.eyebrow"></p>
   <h1 data-i18n="st.h1"></h1>
-  <p class="lede" data-i18n="st.lede"></p>
+  <p class="lede" data-i18n-html="st.lede"></p>
 
   <section class="sec" style="margin-top:26px">
     <h2 data-i18n="st.s.what"></h2>
-    <p class="lede" data-i18n="st.s.what.lede"></p>
+    <p class="lede" data-i18n-html="st.s.what.lede"></p>
     <div class="strip g4" id="figs" style="margin-top:16px"></div>
-    <p class="note dim" id="figsrc" style="margin-top:12px"></p>
+    <p class="note" id="covernote" style="margin-top:14px"></p>
+    <p class="note dim" id="figsrc" style="margin-top:8px"></p>
   </section>
 
   <section class="sec">
-    <h2 data-i18n="st.s.two"></h2>
-    <p class="lede" data-i18n="st.s.two.lede"></p>
-    <div class="cases" id="papers" style="margin-top:16px"></div>
+    <h2 data-i18n="st.s.engine"></h2>
+    <p class="lede" data-i18n-html="st.s.engine.lede"></p>
+    <div class="grid g3" id="engine" style="margin-top:16px"></div>
+    <p class="note" id="enginenote" style="margin-top:14px"></p>
   </section>
 
   <section class="sec">
     <h2 data-i18n="st.s.floor"></h2>
-    <p class="lede" data-i18n="st.s.floor.lede"></p>
+    <p class="lede" data-i18n-html="st.s.floor.lede"></p>
     <div class="bars" id="stack" style="margin-top:18px"></div>
     <div class="legend" id="stackkey" style="margin-top:12px"></div>
     <p class="note" id="floornote" style="margin-top:14px"></p>
   </section>
 
   <section class="sec">
+    <h2 data-i18n="st.s.three"></h2>
+    <p class="lede" data-i18n-html="st.s.three.lede"></p>
+    <div class="cmp" id="cmp"></div>
+    <p class="note" id="cmpnote" style="margin-top:16px"></p>
+  </section>
+
+  <section class="sec">
     <h2 data-i18n="st.s.strc"></h2>
-    <p class="lede" data-i18n="st.s.strc.lede"></p>
+    <p class="lede" data-i18n-html="st.s.strc.lede"></p>
     <div class="strip g3" id="strc" style="margin-top:16px"></div>
     <div class="par" id="par" style="margin-top:18px"></div>
     <p class="note" id="strcread" style="margin-top:14px"></p>
-    <p class="note dim" id="strcsrc" style="margin-top:8px"></p>
   </section>
 
   <section class="sec">
     <h2 data-i18n="st.s.break"></h2>
-    <p class="lede" data-i18n="st.s.break.lede"></p>
+    <p class="lede" data-i18n-html="st.s.break.lede"></p>
     <div class="strip g3" id="stress" style="margin-top:16px"></div>
     <p class="note" id="stressnote" style="margin-top:14px"></p>
   </section>
 
   <section class="sec">
     <h2 data-i18n="st.s.mitig"></h2>
-    <p class="lede" data-i18n="st.s.mitig.lede"></p>
+    <p class="lede" data-i18n-html="st.s.mitig.lede"></p>
     <div class="grid g3" id="mitig" style="margin-top:16px"></div>
-    <p class="note" data-i18n="st.mitig.note" style="margin-top:14px"></p>
+    <p class="note" data-i18n-html="st.mitig.note" style="margin-top:14px"></p>
   </section>
 
   <p class="note" data-i18n="st.note" style="margin-top:26px"></p>
-  <p class="note" data-i18n="st.risk" style="margin-top:12px"></p>
+  <p class="note" data-i18n-html="st.risk" style="margin-top:12px"></p>
 </main>
 
 <script src="assets/i18n.js"></script>

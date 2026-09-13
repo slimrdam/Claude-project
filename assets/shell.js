@@ -150,12 +150,71 @@ function mount(pageId) {
   setTitle();
   root.addEventListener("langchange", setTitle);
 
+  mountDefs();
   apply();
   loadData().then(d => {
     const u = document.getElementById("shell-updated");
     if (u && d.market && d.market.as_of) u.textContent = d.market.as_of;
     else if (u) u.textContent = d.generated || "—";
   }).catch(() => {});
+}
+
+/* ------------------------------------------------------------------ defs */
+/* A term the reader may not know is written inline and carries its definition
+   with it, rather than the page stopping to explain. Any element with data-def
+   opens the panel; the copy lives in the dictionary under def.<key>.t / .d, so a
+   term explained once is explained the same way everywhere.
+
+   It opens as a sheet from the bottom on a phone and as a centred card on a
+   larger screen: one element, one behaviour, no anchoring maths to get wrong
+   next to the edge of the viewport. */
+let sheet = null, defOpener = null;
+
+function mountDefs() {
+  sheet = document.createElement("div");
+  sheet.className = "sheet";
+  sheet.hidden = true;
+  sheet.innerHTML =
+    '<div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-t">' +
+      '<button class="sheet-x" type="button" data-close aria-label="Close">&times;</button>' +
+      '<p class="sheet-k" id="sheet-k"></p>' +
+      '<h3 id="sheet-t"></h3>' +
+      '<div class="sheet-b" id="sheet-b"></div>' +
+    '</div>';
+  document.body.appendChild(sheet);
+
+  sheet.addEventListener("click", e => {
+    if (e.target === sheet || e.target.closest("[data-close]")) closeDef();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !sheet.hidden) closeDef();
+  });
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-def]");
+    if (!el) return;
+    e.preventDefault();
+    openDef(el.dataset.def, el);
+  });
+}
+
+function openDef(key, from) {
+  if (!sheet) return;
+  const title = t("def." + key + ".t");
+  document.getElementById("sheet-k").textContent = t("def.kicker");
+  document.getElementById("sheet-t").textContent = title;
+  document.getElementById("sheet-b").innerHTML = t("def." + key + ".d");
+  defOpener = from || null;
+  sheet.hidden = false;
+  document.documentElement.style.overflow = "hidden";
+  sheet.querySelector(".sheet-x").focus();
+}
+
+function closeDef() {
+  if (!sheet || sheet.hidden) return;
+  sheet.hidden = true;
+  document.documentElement.style.overflow = "";
+  if (defOpener && defOpener.isConnected) defOpener.focus();
+  defOpener = null;
 }
 
 /* Pages register a redraw so switching language re-renders generated content. */
@@ -185,6 +244,6 @@ function fngColor(v, alpha) {
 const fngLabel = v => v < 25 ? t("se.fear") : v < 45 ? t("se.fear2")
                     : v <= 55 ? t("se.neutral") : v <= 75 ? t("se.greed2") : t("se.greed");
 
-root.Shell = { mount, onLang, loadJSON, loadData, loadScenarios, fail, PAGES,
+root.Shell = { mount, onLang, loadJSON, loadData, loadScenarios, fail, PAGES, openDef,
                usd, eur, money, num, pct, signed, big, date, loc, fngLabel, fngColor };
 })(window);
