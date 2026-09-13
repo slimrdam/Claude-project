@@ -315,6 +315,9 @@
     "strc_low_usd": 75,
     "strc_low_note": "STRC traded down to roughly this level before recovering, when the company showed it could sell bitcoin gradually to fund the dividend.",
     "strc_low_note_fr": "STRC est descendue jusqu'à environ ce niveau avant de se redresser, lorsque la société a démontré qu'elle pouvait céder du bitcoin progressivement pour financer le dividende.",
-    "cash_cover_years": 2
+    "cash_cover_years": 2,
+    "strc_yield": 0.12,
+    "strc_yield_note": "The dividend rate is set by the company and changed when it needs to be. Editorial: the rate is announced monthly and no free feed publishes it.",
+    "strc_yield_note_fr": "Le taux du dividende est fixé par la société et modifié quand il le faut. Éditorial : le taux est annoncé chaque mois et aucun flux gratuit ne le publie."
   }
 }

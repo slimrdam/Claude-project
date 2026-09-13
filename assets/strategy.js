@@ -121,7 +121,6 @@ function drawStrc() {
 function drawCmp() {
   const f = figures();
   const lev = f.grossBn && f.netBn > 0 ? f.grossBn / f.netBn : null;
-  const strcPrice = ((D.market || {}).strc || {}).price;
   const rows = [
     /* the risk cells stay a line long and hand the rest to the panel: what goes
        wrong on each of these has a sequence to it, not a sentence */
@@ -135,7 +134,8 @@ function drawCmp() {
     { key: "strc", col: C.up, def: "strc", cells: [
       ["st.c.exposure", t("st.c.strc.exposure")],
       ["st.c.updown",   t("st.c.strc.updown")],
-      ["st.c.income",   t("st.c.strc.income", {price: strcPrice ? S.usd(strcPrice, 2) : "—"})],
+      ["st.c.income",   def("strcyield", t("st.c.strc.income",
+                            {y: f.g.strc_yield ? S.pct(f.g.strc_yield, 0) : "—"}))],
       ["st.c.risk",     def("strcpeg", t("st.c.strc.risk"))],
       ["st.c.custody",  t("st.c.broker")],
     ]},
@@ -190,6 +190,7 @@ function render() {
     low:   f.g.strc_low_usd ? S.usd(f.g.strc_low_usd, 0) : "—",
     par:   S.usd(f.g.strc_par || 100, 0),
     years: f.g.cash_cover_years || 2,
+    yield: f.g.strc_yield ? S.pct(f.g.strc_yield, 0) : "—",
     price: S.usd(f.breakeven, 0),
     fall:  S.pct(1 - f.breakeven / f.btcNow, 0),
   });
