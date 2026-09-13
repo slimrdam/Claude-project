@@ -297,7 +297,7 @@
     ]
   },
   "strategy": {
-    "_comment": "Part seven. HAND-MAINTAINED: the coin count, the claims ranking ahead of the common shares and the preferred terms come from company filings and disclosures, none of which has a free feed. STRC's price does refresh, from stockanalysis.com. Correct these from the filings.",
+    "_comment": "Part seven. HAND-MAINTAINED: the coin count, the claims ranking ahead of the common shares and the preferred terms come from company filings and disclosures, none of which has a free feed. STRC's price does refresh, from stockanalysis.com. Correct these from the filings. The maturity, the STRC low and the cash-cover figure below are the same kind of hand-maintained input: they drive the two risk explanations on the comparison and should be corrected from the filings and from the price record.",
     "as_of": "2026-09-01",
     "btc_held": 650000,
     "senior_claims_usd_bn": 14.0,
@@ -310,6 +310,11 @@
     "drawdown_pct": 0.8,
     "drawdown_years": 4,
     "drawdown_note": "The company's own framing of what a forced sale would require: a fall of roughly this size that then stays down for years, rather than a fall on its own.",
-    "drawdown_note_fr": "La formulation de la société elle-même sur ce qu'exigerait une vente forcée : une chute de cet ordre qui se prolonge ensuite pendant des années, et non une chute isolée."
+    "drawdown_note_fr": "La formulation de la société elle-même sur ce qu'exigerait une vente forcée : une chute de cet ordre qui se prolonge ensuite pendant des années, et non une chute isolée.",
+    "debt_mostly_due_year": 2029,
+    "strc_low_usd": 75,
+    "strc_low_note": "STRC traded down to roughly this level before recovering, when the company showed it could sell bitcoin gradually to fund the dividend.",
+    "strc_low_note_fr": "STRC est descendue jusqu'à environ ce niveau avant de se redresser, lorsque la société a démontré qu'elle pouvait céder du bitcoin progressivement pour financer le dividende.",
+    "cash_cover_years": 2
   }
 }

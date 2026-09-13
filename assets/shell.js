@@ -169,6 +169,11 @@ function mount(pageId) {
    larger screen: one element, one behaviour, no anchoring maths to get wrong
    next to the edge of the viewport. */
 let sheet = null, defOpener = null;
+/* A page can supply values for placeholders inside a definition, so an
+   explanation can quote the same live figure the page is showing rather than a
+   number written into the dictionary and left to go stale. */
+let defVars = {};
+const setDefVars = v => { defVars = v || {}; };
 
 function mountDefs() {
   sheet = document.createElement("div");
@@ -199,10 +204,10 @@ function mountDefs() {
 
 function openDef(key, from) {
   if (!sheet) return;
-  const title = t("def." + key + ".t");
+  const title = t("def." + key + ".t", defVars);
   document.getElementById("sheet-k").textContent = t("def.kicker");
   document.getElementById("sheet-t").textContent = title;
-  document.getElementById("sheet-b").innerHTML = t("def." + key + ".d");
+  document.getElementById("sheet-b").innerHTML = t("def." + key + ".d", defVars);
   defOpener = from || null;
   sheet.hidden = false;
   document.documentElement.style.overflow = "hidden";
@@ -244,6 +249,6 @@ function fngColor(v, alpha) {
 const fngLabel = v => v < 25 ? t("se.fear") : v < 45 ? t("se.fear2")
                     : v <= 55 ? t("se.neutral") : v <= 75 ? t("se.greed2") : t("se.greed");
 
-root.Shell = { mount, onLang, loadJSON, loadData, loadScenarios, fail, PAGES, openDef,
+root.Shell = { mount, onLang, loadJSON, loadData, loadScenarios, fail, PAGES, openDef, setDefVars,
                usd, eur, money, num, pct, signed, big, date, loc, fngLabel, fngColor };
 })(window);

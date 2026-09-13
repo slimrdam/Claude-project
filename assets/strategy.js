@@ -12,6 +12,7 @@ const FR = () => I18N.lang === "fr";
 const C = { btc:"#f0a340", up:"#2ec27e", down:"#ef5350", ink:"var(--ink-3)" };
 let D = null;
 
+const def = (key, word) => `<button type="button" data-def="${key}">${word}</button>`;
 const cell = (k,v,x,col) => `<div class="cell"><div class="k">${k}</div>` +
   `<div class="v"${col?` style="color:${col}"`:""}>${v}</div>` +
   `<div class="x">${x||""}</div></div>`;
@@ -122,18 +123,20 @@ function drawCmp() {
   const lev = f.grossBn && f.netBn > 0 ? f.grossBn / f.netBn : null;
   const strcPrice = ((D.market || {}).strc || {}).price;
   const rows = [
+    /* the risk cells stay a line long and hand the rest to the panel: what goes
+       wrong on each of these has a sequence to it, not a sentence */
     { key: "mstr", col: C.btc, def: "mstr", cells: [
       ["st.c.exposure", t("st.c.mstr.exposure", {x: lev ? S.num(lev, 1) : "—"})],
       ["st.c.updown",   t("st.c.mstr.updown")],
       ["st.c.income",   t("st.c.none")],
-      ["st.c.risk",     t("st.c.mstr.risk")],
+      ["st.c.risk",     def("mstrrisk", t("st.c.mstr.risk"))],
       ["st.c.custody",  t("st.c.broker")],
     ]},
     { key: "strc", col: C.up, def: "strc", cells: [
       ["st.c.exposure", t("st.c.strc.exposure")],
       ["st.c.updown",   t("st.c.strc.updown")],
       ["st.c.income",   t("st.c.strc.income", {price: strcPrice ? S.usd(strcPrice, 2) : "—"})],
-      ["st.c.risk",     t("st.c.strc.risk")],
+      ["st.c.risk",     def("strcpeg", t("st.c.strc.risk"))],
       ["st.c.custody",  t("st.c.broker")],
     ]},
     { key: "btc", col: "#8b9bff", def: null, cells: [
@@ -148,7 +151,7 @@ function drawCmp() {
     `<div class="col" style="border-top:2px solid ${r.col}">` +
     `<div class="hd">${t("st.c." + r.key + ".hd")}</div>` +
     `<div class="nm" style="color:${r.col}">` +
-      (r.def ? `<button type="button" data-def="${r.def}">${t("st.c." + r.key + ".nm")}</button>`
+      (r.def ? def(r.def, t("st.c." + r.key + ".nm"))
              : t("st.c." + r.key + ".nm")) + `</div>` +
     `<p class="sub">${t("st.c." + r.key + ".sub")}</p>` +
     r.cells.map(([k, v]) =>
@@ -180,6 +183,16 @@ function drawMitig() {
 
 function render() {
   if (!D) return;
+  const f = figures();
+  /* the two risk panels quote the page's own figures rather than repeating them */
+  S.setDefVars({
+    year:  (f.g.debt_mostly_due_year || ""),
+    low:   f.g.strc_low_usd ? S.usd(f.g.strc_low_usd, 0) : "—",
+    par:   S.usd(f.g.strc_par || 100, 0),
+    years: f.g.cash_cover_years || 2,
+    price: S.usd(f.breakeven, 0),
+    fall:  S.pct(1 - f.breakeven / f.btcNow, 0),
+  });
   drawFigs();
   drawEngine(); drawStack(); drawCmp(); drawStrc(); drawStress(); drawMitig();
 }
