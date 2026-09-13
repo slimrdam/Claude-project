@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strategy</title>
+<meta name="theme-color" content="#0a0e17">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .daily{max-height:420px;overflow:auto;border:1px solid var(--rule);
+    border-radius:var(--r);background:var(--panel)}
+  .daily table{font-size:12.5px}
+  .daily th{position:sticky;top:0;background:var(--panel);z-index:1;
+    padding:10px 12px 9px;border-bottom:1px solid var(--rule)}
+  .daily td{padding:7px 12px}
+  .daily td:first-child{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+  #tip{font-family:var(--mono);font-size:12px;color:var(--ink-2);min-height:18px;margin-top:8px}
+  #tip b{color:var(--ink)}
+  .runs{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px;margin-top:14px}
+  .run{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:14px}
+  .run .k{font-size:12px;color:var(--ink-3);margin-bottom:6px}
+  .run .v{font-family:var(--display);font-size:20px;font-weight:600}
+  .run .n{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+  /* The par line: where STRC trades against the $100 it is issued at. The traded
+     price is tagged above the track and the issue price below, so the two labels
+     never collide when the price sits close to par - which is the normal case. */
+  .par{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:18px}
+  .par .track{position:relative;height:12px;border-radius:3px;margin:34px 0 30px;
+    background:linear-gradient(90deg,rgba(46,194,126,.38),rgba(38,48,74,.55),rgba(239,83,80,.32))}
+  .par .par-l{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink-2)}
+  .par .dot{position:absolute;top:50%;width:15px;height:15px;border-radius:50%;
+    transform:translate(-50%,-50%);border:2px solid var(--panel)}
+  .par .tag{position:absolute;transform:translateX(-50%);white-space:nowrap;
+    font-family:var(--mono);font-size:11.5px;font-weight:600}
+  .par .tag.up{top:-27px}
+  .par .tag.dn{top:20px;font-weight:500;color:var(--ink-2)}
+  .par .ends{display:grid;grid-template-columns:1fr 1fr;gap:18px;
+    font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .par .ends b{display:block;font-weight:500;color:var(--ink-2);margin-top:4px;
+    font-family:var(--body);font-size:12.5px;line-height:1.4}
+  .par .ends span:last-child{text-align:right}
+</style>
+</head>
+<body>
+<main class="wrap page">
+  <p class="eyebrow" data-i18n="st.eyebrow"></p>
+  <h1 data-i18n="st.h1"></h1>
+  <p class="lede" data-i18n="st.lede"></p>
+
+  <section class="sec" style="margin-top:26px">
+    <h2 data-i18n="st.s.what"></h2>
+    <p class="lede" data-i18n="st.s.what.lede"></p>
+    <div class="strip g4" id="figs" style="margin-top:16px"></div>
+    <p class="note dim" id="figsrc" style="margin-top:12px"></p>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="st.s.two"></h2>
+    <p class="lede" data-i18n="st.s.two.lede"></p>
+    <div class="cases" id="papers" style="margin-top:16px"></div>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="st.s.floor"></h2>
+    <p class="lede" data-i18n="st.s.floor.lede"></p>
+    <div class="bars" id="stack" style="margin-top:18px"></div>
+    <div class="legend" id="stackkey" style="margin-top:12px"></div>
+    <p class="note" id="floornote" style="margin-top:14px"></p>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="st.s.strc"></h2>
+    <p class="lede" data-i18n="st.s.strc.lede"></p>
+    <div class="strip g3" id="strc" style="margin-top:16px"></div>
+    <div class="par" id="par" style="margin-top:18px"></div>
+    <p class="note" id="strcread" style="margin-top:14px"></p>
+    <p class="note dim" id="strcsrc" style="margin-top:8px"></p>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="st.s.break"></h2>
+    <p class="lede" data-i18n="st.s.break.lede"></p>
+    <div class="strip g3" id="stress" style="margin-top:16px"></div>
+    <p class="note" id="stressnote" style="margin-top:14px"></p>
+  </section>
+
+  <section class="sec">
+    <h2 data-i18n="st.s.mitig"></h2>
+    <p class="lede" data-i18n="st.s.mitig.lede"></p>
+    <div class="grid g3" id="mitig" style="margin-top:16px"></div>
+    <p class="note" data-i18n="st.mitig.note" style="margin-top:14px"></p>
+  </section>
+
+  <p class="note" data-i18n="st.note" style="margin-top:26px"></p>
+  <p class="note" data-i18n="st.risk" style="margin-top:12px"></p>
+</main>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/shell.js"></script>
+<script src="assets/strategy.js"></script>
+</body>
+</html>

@@ -13,7 +13,8 @@ const PAGES = [
   { id: "path",       href: "path.html",       n: "03", key: "nav.path" },
   { id: "sentiment",  href: "sentiment.html",  n: "04", key: "nav.sentiment" },
   { id: "sbet",       href: "sbet.html",       n: "05", key: "nav.sbet" },
-  { id: "case",       href: "case.html",       n: "06", key: "nav.case" }
+  { id: "case",       href: "case.html",       n: "06", key: "nav.case" },
+  { id: "strategy",   href: "strategy.html",   n: "07", key: "nav.strategy" }
 ];
 
 /* ---------------------------------------------------------------- formatting */

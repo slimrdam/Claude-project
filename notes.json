@@ -182,9 +182,15 @@
     "file": "assets/img/lgc-btc.jpg"
   },
   "ownership": {
-    "_comment": "Who owns the shares, and the denominator the short interest is read against. The short interest itself refreshes from the FINRA settlement series; only the float it is divided by is kept here, because it barely moves and no free feed publishes it. Float is derived from a published reading of short interest as a share of float (21% against 35.0M shares short at the 31 Aug 2026 settlement), which puts the float near 167M of the 217M shares outstanding. Holder positions are the last reported 13F figures; percentages are of shares outstanding. Replace by hand when new filings land.",
+    "_comment": "Who owns the shares, and the short-interest figures as a published screener reports them. REPORTED VALUES WIN: set short_float_pct / short_shares / days_to_cover here and the page prints them verbatim. Leave short_float_pct null and the page falls back to dividing the FINRA settlement figure by float_shares, which keeps moving on its own but is only as good as the float. Holder positions are last-reported 13F; percentages are of shares outstanding.",
     "as_of": "2026-08-31",
     "source": "13F filings and the FINRA short-interest settlement",
+    "source_fr": "Déclarations 13F et arrêté FINRA des positions vendeuses",
+    "reported_source": "fintel.io/ss/us/sbet",
+    "reported_as_of": null,
+    "short_float_pct": null,
+    "short_shares": null,
+    "days_to_cover": null,
     "float_shares": 167000000,
     "institutional_pct": 0.6,
     "top_n_pct": 0.484,
@@ -249,7 +255,61 @@
         "pct": 0.017,
         "kind": "passive"
       }
-    ],
-    "source_fr": "Déclarations 13F et arrêté FINRA des positions vendeuses"
+    ]
+  },
+  "treasuries": {
+    "_comment": "The three treasury companies part five points at. HAND-MAINTAINED AND APPROXIMATE: no free feed publishes a cross-company holdings table, so coin counts are rounded to the nearest sensible unit and carry the date they were read. SharpLink's own figure refreshes from its dashboard elsewhere in the app; the number here is only for the side-by-side. Correct these from the companies' filings.",
+    "as_of": "2026-09-01",
+    "rows": [
+      {
+        "ticker": "MSTR",
+        "name": "Strategy",
+        "asset": "BTC",
+        "coins": 650000,
+        "debt": true,
+        "what": "The largest corporate holder of bitcoin, and the company that invented the model.",
+        "what_fr": "Le premier détenteur de bitcoin au monde parmi les sociétés cotées, et l'inventeur du modèle.",
+        "funding": "Convertible notes and preferred shares alongside ordinary equity.",
+        "funding_fr": "Obligations convertibles et actions de préférence en plus des actions ordinaires."
+      },
+      {
+        "ticker": "BMNR",
+        "name": "Bitmine Immersion",
+        "asset": "ETH",
+        "coins": 3000000,
+        "debt": false,
+        "what": "The largest ether treasury, built in under a year.",
+        "what_fr": "La plus grosse trésorerie ether, constituée en moins d'un an.",
+        "funding": "Share issuance only.",
+        "funding_fr": "Émission d'actions uniquement."
+      },
+      {
+        "ticker": "SBET",
+        "name": "SharpLink Gaming",
+        "asset": "ETH",
+        "coins": 891000,
+        "debt": false,
+        "what": "The second ether treasury, and the one taken apart in part six.",
+        "what_fr": "La deuxième trésorerie ether, et celle décortiquée dans la sixième partie.",
+        "funding": "Share issuance only, and the holding is staked for an income.",
+        "funding_fr": "Émission d'actions uniquement, et la position est mise en jeu pour produire un revenu."
+      }
+    ]
+  },
+  "strategy": {
+    "_comment": "Part seven. HAND-MAINTAINED: the coin count, the claims ranking ahead of the common shares and the preferred terms come from company filings and disclosures, none of which has a free feed. STRC's price does refresh, from stockanalysis.com. Correct these from the filings.",
+    "as_of": "2026-09-01",
+    "btc_held": 650000,
+    "senior_claims_usd_bn": 14.0,
+    "senior_note": "Convertible notes and preferred shares, which are repaid or redeemed before the ordinary shares receive anything.",
+    "senior_note_fr": "Obligations convertibles et actions de préférence, remboursées ou rachetées avant que les actions ordinaires ne touchent quoi que ce soit.",
+    "strc_par": 100,
+    "strc_note": "STRC is a perpetual preferred share with a stated value of $100 that pays a monthly dividend. The rate is adjusted with the intention of keeping it near that value, so $100 is the reference the price is read against rather than a target.",
+    "strc_note_fr": "STRC est une action de préférence perpétuelle d'une valeur nominale de 100 $ qui verse un dividende mensuel. Le taux est ajusté dans l'intention de la maintenir proche de cette valeur : 100 $ est donc la référence à laquelle se lit le cours, pas un objectif.",
+    "mnav_floor": 1.0,
+    "drawdown_pct": 0.8,
+    "drawdown_years": 4,
+    "drawdown_note": "The company's own framing of what a forced sale would require: a fall of roughly this size that then stays down for years, rather than a fall on its own.",
+    "drawdown_note_fr": "La formulation de la société elle-même sur ce qu'exigerait une vente forcée : une chute de cet ordre qui se prolonge ensuite pendant des années, et non une chute isolée."
   }
 }

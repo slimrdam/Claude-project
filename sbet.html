@@ -11,6 +11,18 @@
 <link rel="stylesheet" href="assets/app.css">
 <style>
   .worked{margin-top:16px}
+  /* One row per company: name and size on the left, what makes it different on the
+     right, and the single fact that decides its risk pinned to the end. */
+  .tw{display:flex;flex-direction:column;gap:10px}
+  .twr{display:grid;grid-template-columns:minmax(150px,.85fr) 1.6fr auto;gap:16px;align-items:center;
+    background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:14px 16px}
+  .twr .tk{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-3)}
+  .twr .nm{font-family:var(--display);font-size:15.5px;font-weight:600;margin-top:3px}
+  .twr .sz{font-family:var(--mono);font-size:12.5px;margin-top:5px}
+  .twr p{font-size:13px;color:var(--ink-2);margin:0;max-width:none}
+  .twr .dbt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    white-space:nowrap;border:1px solid;border-radius:20px;padding:6px 11px}
+  @media (max-width:720px){ .twr{grid-template-columns:1fr;gap:9px} .twr .dbt{justify-self:start} }
 </style>
 </head>
 <body>
@@ -46,10 +58,10 @@
   </section>
 
   <section class="sec">
-    <h2 data-i18n="sb.s.risk"></h2>
-    <p class="lede" data-i18n="sb.s.risk.lede"></p>
-    <div class="grid g3" id="risk" style="margin-top:16px"></div>
-    <p class="note" data-i18n="sb.risk.note" style="margin-top:14px"></p>
+    <h2 data-i18n="sb.s.who"></h2>
+    <p class="lede" data-i18n="sb.s.who.lede"></p>
+    <div class="tw" id="who" style="margin-top:16px"></div>
+    <p class="note dim" id="whosrc" style="margin-top:12px"></p>
   </section>
 
   <p class="note" data-i18n="sb.next" style="margin-top:26px"></p>

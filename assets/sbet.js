@@ -50,11 +50,29 @@ function drawExplainer() {
     `<div class="lbl" style="color:${col}">${t("sb.mech." + k + ".t")}</div>` +
     `<p class="note" style="margin:10px 0 0">${t("sb.mech." + k + ".d")}</p></div>`).join("");
 
-  const yld = (A && A.allocation_example && A.allocation_example.staking_yield) || 0.025;
-  $("risk").innerHTML =
-    card(t("sb.risk.debt.t"), t("sb.risk.debt.d"), C.up) +
-    card(t("sb.risk.yield.t"), t("sb.risk.yield.d", {yield: S.pct(yld, 1)}), C.eth) +
-    card(t("sb.risk.btc.t"), t("sb.risk.btc.d"), "#f0a340");
+}
+
+/* The three worth following, side by side. Holdings are editorial and dated, so the
+   block says so rather than letting a rounded coin count read as a live figure. */
+function drawWho() {
+  const tw = (D.notes && D.notes.treasuries) || {};
+  const rows = tw.rows || [];
+  const COIN = {BTC: "#f0a340", ETH: C.eth};
+  $("who").innerHTML = rows.map(r => {
+    const col = r.debt ? C.down : C.up;
+    const size = r.coins >= 1e6 ? S.num(r.coins / 1e6, 1) + "M " + r.asset
+                               : S.num(r.coins / 1000, 0) + "k " + r.asset;
+    return `<div class="twr">` +
+      `<div><div class="tk">${r.ticker}</div><div class="nm">${r.name}</div>` +
+        `<div class="sz" style="color:${COIN[r.asset]}">≈ ${size}</div></div>` +
+      `<p>${FR() ? r.what_fr : r.what} ${FR() ? r.funding_fr : r.funding}</p>` +
+      `<span class="dbt" style="color:${col};border-color:${col}55">` +
+        `${t(r.debt ? "sb.who.debt" : "sb.who.nodebt")}</span></div>`;
+  }).join("");
+  $("whosrc").textContent = rows.length
+    ? t("common.editorial") + " · " + t("sb.who.approx") +
+      (tw.as_of ? " · " + t("common.asof") + " " + S.date(tw.as_of) : "")
+    : "";
 }
 
 function drawTwo() {
@@ -66,7 +84,7 @@ function drawTwo() {
 
 function render() {
   if (!D) return;
-  drawWorked(); drawExplainer(); drawTwo();
+  drawWorked(); drawExplainer(); drawTwo(); drawWho();
 }
 Shell.onLang(render);
 S.loadData().then(d => { D = d; render(); }).catch(e => Shell.fail($("worked"), e));

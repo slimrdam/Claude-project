@@ -38,34 +38,6 @@ function axisX(f, dates, every) {
 }
 const line = (pts) => pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
 
-function drawRatio() {
-  const s = D.series, f = frame(920, 300, {l:52, r:14, t:14, b:34});
-  const vals = s.map(r=>r.ri);
-  const lo = Math.min.apply(null, vals)*0.95, hi = Math.max.apply(null, vals)*1.05;
-  const X = i => f.L + i/(s.length-1)*f.iw;
-  const Y = v => f.T + f.ih - (v-lo)/(hi-lo)*f.ih;
-  const pts = s.map((r,i)=>[X(i), Y(r.ri)]);
-  let g = axisY(f, lo, hi, v => S.num(v,0)) + axisX(f, s.map(r=>r.d), Math.ceil(s.length/6));
-  /* 100 = holding the equity has exactly matched holding the ether */
-  g += `<line x1="${f.L}" x2="${f.w-f.R}" y1="${Y(100).toFixed(1)}" y2="${Y(100).toFixed(1)}" ` +
-       `stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="5 4"/>` +
-       `<text class="axis" x="${f.w-f.R-4}" y="${(Y(100)-6).toFixed(1)}" text-anchor="end">100</text>`;
-  g += `<path d="${line(pts)} L ${X(s.length-1).toFixed(1)} ${(f.T+f.ih).toFixed(1)} L ${f.L} ${(f.T+f.ih).toFixed(1)} Z" ` +
-       `fill="${C.sbet}" opacity=".08"/>`;
-  g += `<path d="${line(pts)}" fill="none" stroke="${C.sbet}" stroke-width="2"/>`;
-  g += `<circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(s[s.length-1].ri).toFixed(1)}" r="4" fill="${C.sbet}"/>`;
-  $("ratio").innerHTML = g;
-
-  const st = D.stats;
-  $("ratioNote").textContent = FR()
-    ? `Base 100 au 4 août 2025. À ${S.num(st.ri_now,1)}, un euro placé en SBET vaut ${
-        st.ri_now>=100?"plus":"moins"} qu'un euro placé en ether sur la période — creux à ${
-        S.num(st.low_ri,1)} le ${S.date(st.low_d)}.`
-    : `Indexed to 100 on 4 August 2025. At ${S.num(st.ri_now,1)}, a euro in SBET is worth ${
-        st.ri_now>=100?"more":"less"} than a euro in ether over the period — the low was ${
-        S.num(st.low_ri,1)} on ${S.date(st.low_d)}.`;
-}
-
 function drawMonths() {
   const m = D.months, f = frame(920, 230, {l:52, r:14, t:14, b:34});
   const vals = m.map(x=>x.r);
@@ -208,7 +180,11 @@ function card(t1, d1, col) {
 function drawCompany() {
   const m = D.market || {}, sl = m.sharplink;
   if (!sl) return;
-  const src = t("sb.src.company") + (sl.as_of ? " · " + sl.as_of : "");
+  /* SharpLink stamps its dashboard with an English date string; re-read it so the
+     French page does not print "September 8, 2026". */
+  const d = sl.as_of ? new Date(sl.as_of) : null;
+  const stamp = d && !isNaN(d) ? S.date(d.toISOString().slice(0, 10)) : sl.as_of;
+  const src = t("sb.src.company") + (stamp ? " · " + stamp : "");
   $("nav").insertAdjacentHTML("beforeend",
     cell(t("sb.f.navps"), S.usd(sl.nav_per_share, 2), src, C.eth) +
     cell(t("sb.f.conc"), S.num(sl.eth_concentration, 2) + " ETH", src) +
@@ -223,33 +199,27 @@ function drawCompany() {
   }
 }
 
-function drawStrc() {
-  const st = (D.market || {}).strc;
-  if (!st) { $("strc").innerHTML = ""; return; }
-  const ch = st.change_pct;
-  $("strc").innerHTML =
-    cell(t("sb.strc.price"), S.usd(st.price, 2), S.date(st.date),
-         ch == null ? "" : (ch >= 0 ? C.up : C.down)) +
-    cell(t("common.spot"), ch == null ? "—" : S.signed(ch / 100, 2),
-         S.date(st.date), ch >= 0 ? C.up : C.down);
-}
-
 function drawShort() {
   const sh = (D.market || {}).short, cf = D.config;
   if (!sh) { $("short").innerHTML = ""; $("shortchart").innerHTML = ""; return; }
   const own = (D.notes && D.notes.ownership) || {};
   const pct = cf.shares ? sh.interest / cf.shares : null;
-  /* The share that matters is of the float, not of every share issued: the
-     shares held strategically are not available to be borrowed. */
-  const fl = own.float_shares ? sh.interest / own.float_shares : null;
+  /* The share that matters is of the float, not of every share issued: the shares
+     held strategically cannot be borrowed. A figure entered from a published
+     screener wins; without one, the FINRA settlement is divided by the float, so
+     the percentage still moves between readings. */
+  const fl = own.short_float_pct != null ? own.short_float_pct
+           : own.float_shares ? sh.interest / own.float_shares : null;
+  const shortN = own.short_shares != null ? own.short_shares : sh.interest;
+  const dtc = own.days_to_cover != null ? own.days_to_cover : sh.days_to_cover;
   $("short").innerHTML =
-    cell(t("sb.short.n"), S.num(sh.interest / 1e6, 1) + "M",
-         t("sb.short.settle", {date: S.date(sh.settlement)}), C.down) +
+    cell(t("sb.short.n"), S.num(shortN / 1e6, 1) + "M",
+         t("sb.short.settle", {date: S.date(own.reported_as_of || sh.settlement)}), C.down) +
     cell(t("sb.short.float"), fl == null ? "—" : S.pct(fl, 0),
          t("sb.short.float.x", {n: S.num(own.float_shares / 1e6, 0) + "M"}), C.down) +
     cell(t("sb.short.pct"), pct == null ? "—" : S.pct(pct, 1),
          t("sb.short.pct.x", {n: S.num(cf.shares / 1e6, 0) + "M"})) +
-    cell(t("sb.short.days"), S.num(sh.days_to_cover, 1), t("sb.short.days.x"));
+    cell(t("sb.short.days"), S.num(dtc, 1), t("sb.short.days.x"));
 
   /* the two readings of a large short position, side by side */
   $("sq").innerHTML = [["hedge", C.eth], ["squeeze", C.up]].map(([k, col]) =>
@@ -259,7 +229,7 @@ function drawShort() {
 
   $("shortread").textContent = fl == null ? "" : t("sb.short.read",
     {float: S.pct(fl, 0), inst: S.pct(own.institutional_pct || 0, 0),
-     days: S.num(sh.days_to_cover, 1)});
+     days: S.num(dtc, 1)});
 
   const h = sh.history || [];
   if (h.length < 3) { $("shortchart").innerHTML = ""; return; }
@@ -303,20 +273,22 @@ function drawTable() {
 /* --- the company's own published figures, STRC and short interest --------- */
 function drawFigs() {
   const st = D.stats, cf = D.config, m = D.market || {}, sl = m.sharplink;
+  const own = (D.notes && D.notes.ownership) || {};
   const shares = cf.shares;          // compute() emits 'shares', not 'shares_outstanding'
-  const navPer = cf.eth_held * st.eth_now / shares;
   const ethPer = cf.eth_held / shares;
   const mnav = st.mnav_now, disc = mnav != null && mnav < 1;
+  const fl = own.short_float_pct != null ? own.short_float_pct
+           : (own.float_shares && m.short) ? m.short.interest / own.float_shares : null;
 
   $("stale").innerHTML = cf.stale
     ? `<div class="banner">${t("sb.stale",{days:cf.stale_days})}</div>` : "";
 
   $("nav").innerHTML =
     cell(t("sb.price.per"), S.usd(st.sbet_now, 2), "SBET", C.sbet) +
-    cell(t("sb.nav.per"), S.usd(navPer, 2), t("common.live"), C.eth) +
     cell(t("sb.eth.per"), S.num(ethPer, 5) + " ETH",
          S.num(cf.eth_held, 0) + " ETH / " + S.num(shares / 1e6, 1) + "M") +
-    cell(t("sb.f.mnav"), S.num(mnav, 3), t("sb.mnav.d"), disc ? C.up : C.sbet);
+    cell(t("sb.f.mnav"), S.num(mnav, 3), t("sb.mnav.d"), disc ? C.up : C.sbet) +
+    cell(t("sb.short.float"), fl == null ? "—" : S.pct(fl, 0), t("sb.short.float.s"), C.down);
   $("navnote").textContent = t(disc ? "sb.nav.note.disc" : "sb.nav.note.prem",
     {mnav: S.num(mnav, 3), pct: S.pct(mnav, 0), gap: S.pct(Math.abs(1 - mnav), 0)});
   $("mechnow").textContent = t(disc ? "sb.mech.now.disc" : "sb.mech.now.prem",
@@ -369,8 +341,8 @@ function drawHolders() {
 
 function render() {
   if (!D) return;
-  drawFigs(); drawCompany(); drawStrc(); drawHolders(); drawShort();
-  drawRatio(); drawMonths(); drawMain(); drawMnav(); drawHold(); drawTable();
+  drawFigs(); drawCompany(); drawHolders(); drawShort();
+  drawMonths(); drawMain(); drawMnav(); drawHold(); drawTable();
 }
 Shell.onLang(render);
 S.loadData().then(d => { D = d; render(); }).catch(e => Shell.fail($("figs"), e));
