@@ -14,6 +14,8 @@ const COLORS = { trad:"#4d7d76", digi:"#6aa79a", eth:"#8b9bff", btc:"#f0a340" };
 const LABELS = { trad:"al.pos.trad", digi:"al.pos.digi", eth:"al.pos.eth", btc:"al.pos.btc" };
 
 let D = null, A = null, P = null, scenario = "base", edited = false;
+/* filled once the example is loaded: the positions a monthly amount can go into */
+let MONTHLY = [];
 
 /* ---------------------------------------------------------------- state */
 function defaults() {
@@ -166,18 +168,27 @@ function render() {
     `<span><i style="background:${COLORS[p.id]}"></i>${t(LABELS[p.id])} ${p.amount?S.eur(p.amount):"—"}` +
     (p.monthly ? ` <span class="dim">+${S.eur(p.monthly)}/${FR()?"mois":"mo"}</span>` : "") + `</span>`).join("");
 
-  /* capital inputs: labels are re-translated, values are only pushed into fields
-     the reader is not currently typing in — rebuilding them on every keystroke is
-     what limited entry to a single character */
+  /* Both groups: labels are re-translated, values are only pushed into fields the
+     reader is not currently typing in — rebuilding them on every keystroke is what
+     limited entry to a single character. Each monthly field carries the rate that
+     will actually be applied to it, which is the same rate the table below uses. */
   buildInputs();
-  syncInput("mon", monthlyIn());
-  P.positions.forEach((p, i) => syncInput("cap" + i, p.amount));
   P.positions.forEach((p, i) => {
+    syncInput("cap" + i, p.amount);
     const l = document.querySelector(`label[for="cap${i}"]`);
-    if (l) l.textContent = t(LABELS[p.id]);
+    if (l) l.innerHTML = t(LABELS[p.id]) +
+      `<span class="rate">${S.pct(effRate(p, simOn ? ge : 0, simOn ? gb : 0), 2)}</span>`;
   });
-  const ml = document.querySelector('label[for="mon"]');
-  if (ml) ml.textContent = t("al.monthly");
+  MONTHLY.forEach(i => {
+    const p = P.positions[i];
+    syncInput("mon" + i, p.monthly);
+    const l = document.querySelector(`label[for="mon${i}"]`);
+    if (l) l.innerHTML = t(LABELS[p.id]) +
+      `<span class="rate">${S.pct(effRate(p, simOn ? ge : 0, simOn ? gb : 0), 2)}</span>`;
+  });
+  $("startnote").textContent = t("al.g.start.n", {total: S.eur(T, 0)});
+  $("monthnote").textContent = t("al.g.month.n",
+    {total: S.eur(monthlyIn(), 0), year: S.eur(monthlyIn() * 12, 0)});
 
   /* scenario */
   $("scenario").querySelectorAll("button").forEach(b => {
@@ -264,23 +275,27 @@ function buildInputs() {
   if (built) return;
   built = true;
 
-  $("capinputs").innerHTML = P.positions.map((p, i) =>
+  $("startinputs").innerHTML = P.positions.map((p, i) =>
     `<div class="inp"><label for="cap${i}"></label>` +
     `<input type="number" id="cap${i}" data-i="${i}" class="capin" min="0" step="1000"></div>`
-  ).join("") +
-    `<div class="inp"><label for="mon"></label>` +
-    `<input type="number" id="mon" min="0" step="25"></div>`;
+  ).join("");
+
+  /* Monthly money goes into one of three places. The ordinary savings account is
+     not offered: the whole question on this page is what the monthly amount buys,
+     and leaving it in a 1.25% account is what the first chart already answers. */
+  $("monthinputs").innerHTML = MONTHLY.map(i =>
+    `<div class="inp"><label for="mon${i}"></label>` +
+    `<input type="number" id="mon${i}" data-i="${i}" class="monin" min="0" step="25"></div>`
+  ).join("");
 
   document.querySelectorAll(".capin").forEach(el => el.addEventListener("input", e => {
     P.positions[+e.target.dataset.i].amount = Math.max(0, +e.target.value || 0);
     save(); render();
   }));
-  $("mon").addEventListener("input", e => {
-    const v = Math.max(0, +e.target.value || 0), prev = monthlyIn() || 1;
-    P.positions.forEach(p => { if (p.monthly) p.monthly = Math.round(p.monthly / prev * v); });
-    if (!monthlyIn() && v) P.positions[1].monthly = v;
+  document.querySelectorAll(".monin").forEach(el => el.addEventListener("input", e => {
+    P.positions[+e.target.dataset.i].monthly = Math.max(0, +e.target.value || 0);
     save(); render();
-  });
+  }));
 
   ["eth","btc"].forEach(w => {
     const col = w === "eth" ? "var(--eth)" : "var(--btc)";
@@ -385,6 +400,11 @@ Shell.onLang(render);
 
 S.loadData().then(d => {
   D = d; A = d.assumptions; P = load();
+  /* Everything except the ordinary savings account can take a monthly amount.
+     Resolved from the positions themselves so the example stays the single
+     source of truth for what the buckets are. */
+  MONTHLY = P.positions.map((p, i) => (p.id === "trad" ? -1 : i)).filter(i => i >= 0);
+  P.positions.forEach(p => { if (p.id === "trad") p.monthly = 0; });
   render();
 }).catch(e => Shell.fail($("figs"), e));
 })();

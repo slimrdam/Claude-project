@@ -25,6 +25,12 @@
   .ticks2{display:flex;justify-content:space-between;font-family:var(--mono);
     font-size:10.5px;color:var(--ink-3);margin-top:2px}
   .inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  /* The two groups answer different questions - what you hold now, and what you
+     add each month - so they are separated rather than sharing one row of boxes. */
+  .setgrp h3{margin:0 0 4px;font-size:15.5px}
+  .setgrp>.note{margin:0 0 14px}
+  .setgrp>.note:last-child{margin:14px 0 0}
+  .inp .rate{float:right;font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:500}
   .inp label{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:6px}
   .inp input{width:100%}
   .proj{margin-top:14px;padding-top:13px;border-top:1px solid var(--rule);font-size:13px}
@@ -52,7 +58,19 @@
   <div class="band" id="band"></div>
   <div class="bandkey" id="bandkey"></div>
 
-  <div class="inputs panel" style="margin-top:18px" id="capinputs"></div>
+  <div class="panel setgrp" style="margin-top:18px">
+    <h3 data-i18n="al.g.start"></h3>
+    <p class="note dim" data-i18n="al.g.start.d"></p>
+    <div class="inputs" id="startinputs"></div>
+    <p class="note" id="startnote"></p>
+  </div>
+
+  <div class="panel setgrp" style="margin-top:12px">
+    <h3 data-i18n="al.g.month"></h3>
+    <p class="note dim" data-i18n="al.g.month.d"></p>
+    <div class="inputs" id="monthinputs"></div>
+    <p class="note" id="monthnote"></p>
+  </div>
 
   <div class="seg" id="scenario" style="margin-top:20px" role="group">
     <button data-sc="base" aria-pressed="true"></button>

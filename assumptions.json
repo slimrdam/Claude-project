@@ -37,7 +37,7 @@
     "target": 0.05
   },
   "allocation_example": {
-    "_comment": "A HYPOTHETICAL worked example, not anyone's portfolio. Defaults only; the page lets the reader change every number and keeps their edits in their own browser.",
+    "_comment": "A HYPOTHETICAL worked example, not anyone's portfolio. Defaults only; the page lets the reader change every number and keeps their edits in their own browser. Monthly money is split across the digital account and the two coins; the ordinary savings account takes the opening amount only.",
     "total": 100000,
     "monthly": 500,
     "positions": [
@@ -51,13 +51,13 @@
         "id": "digi",
         "amount": 45000,
         "rate": 0.02,
-        "monthly": 425
+        "monthly": 350
       },
       {
         "id": "eth",
         "amount": 10000,
         "rate": 0.025,
-        "monthly": 0,
+        "monthly": 75,
         "kind": "eth"
       },
       {
