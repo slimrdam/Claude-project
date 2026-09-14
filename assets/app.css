@@ -94,13 +94,21 @@ b,strong{font-weight:600;color:var(--ink)}
 .pos{color:var(--up)}.neg{color:var(--down)}
 
 /* ---------------------------------------------------------------- nav */
+.topbar .wrap{max-width:none}
 .topbar{
   position:sticky;top:0;z-index:60;
   background:rgba(10,14,23,.92);backdrop-filter:blur(12px);
   border-bottom:1px solid var(--rule);
 }
-.topbar-in{display:flex;align-items:center;gap:14px;min-height:60px}
-@media (max-width:860px){
+/* The page is capped at 1080px, but the bar is chrome rather than content and
+   the eight tabs need more room than that leaves. It spans the viewport, up to
+   a limit wide enough for the longest label set. */
+.topbar-in{display:flex;align-items:center;gap:14px;min-height:60px;
+  max-width:1560px;margin:0 auto}
+/* Below this the eight tabs no longer fit beside the name, so the bar takes two
+   rows and gives the strip the whole width rather than scrolling the first tab
+   out of sight. */
+@media (max-width:1199px){
   .topbar-in{flex-wrap:wrap;gap:9px;min-height:0;padding-block:9px}
   .topbar-in .navlinks{order:3;flex-basis:100%;margin-left:0}
   .topbar-in .langsw{margin-left:auto}
@@ -115,7 +123,7 @@ b,strong{font-weight:600;color:var(--ink)}
    word where the app's title should be. The bar wraps to two rows instead: the
    name and the language switch on top, the tab strip across the width below. The
    short name is now a real title too, kept only for the narrowest screens. */
-@media (max-width:430px){ .brand .full{display:none} .brand .short{display:inline} }
+@media (max-width:1300px){ .brand .full{display:none} .brand .short{display:inline} }
 
 /* Numbered step chips. Each carries its own surface and a badge, so they read as
    controls even on the home page where the reader has not clicked anything yet. */
@@ -123,20 +131,20 @@ b,strong{font-weight:600;color:var(--ink)}
   padding:3px;background:var(--panel);border:1px solid var(--rule);border-radius:11px}
 .navlinks::-webkit-scrollbar{display:none}
 .navlinks a{
-  display:flex;align-items:center;gap:8px;flex:none;
+  display:flex;align-items:center;gap:6px;flex:none;
   font-family:var(--body);font-size:13px;font-weight:500;color:var(--ink-2);
-  padding:7px 11px;border-radius:8px;white-space:nowrap;
+  padding:7px 9px;border-radius:8px;white-space:nowrap;
   border:1px solid transparent;transition:.15s;
 }
+/* A plain number rather than a filled badge: the box cost about 90px across
+   eight tabs, which is most of what made the first one scroll out of sight. */
 .navlinks a .n{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-width:21px;height:18px;border-radius:5px;
-  background:var(--rule-soft);color:var(--ink-3);
+  color:var(--ink-3);
   font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.02em;
 }
 .navlinks a:hover{color:var(--ink);background:var(--panel-2);
   border-color:var(--rule);text-decoration:none}
-.navlinks a:hover .n{background:var(--rule);color:var(--ink-2)}
+.navlinks a:hover .n{color:var(--ink-2)}
 .navlinks a[aria-current="page"]{
   color:#fff;background:var(--panel-2);
   border-color:rgba(139,155,255,.45);
