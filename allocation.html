@@ -74,7 +74,8 @@
 
   <div class="seg" id="scenario" style="margin-top:20px" role="group">
     <button data-sc="base" aria-pressed="true"></button>
-    <button data-sc="sim" aria-pressed="false"></button>
+    <button data-sc="case" data-k="base" aria-pressed="false"></button>
+    <button data-sc="case" data-k="bull" aria-pressed="false"></button>
   </div>
   <p class="note" id="scnote" style="margin-top:8px"></p>
 
@@ -104,8 +105,6 @@
         <input type="range" id="years" min="3" max="30" step="1" value="15">
         <div class="ticks2"><span>3</span><span>15</span><span>30</span></div>
       </div>
-      <button class="btn" id="preset" style="margin-top:14px"></button>
-      <p class="note" id="presetnote" style="margin:8px 0 0"></p>
     </div>
     <div class="grid g2" style="margin-top:12px">
       <div class="panel" id="ethpanel"></div>

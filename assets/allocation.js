@@ -95,6 +95,34 @@ const fx = () => (D.market && D.market.eurusd && D.market.eurusd.rate) || 1.1;
 const SIMC = () => A.simulator_cases || A.cases;
 const caseTarget = (which, k) => SIMC()[k][which + "_usd"] / fx();
 
+/* Which named case an asset is sitting on, or null when the reader has moved it
+   somewhere of their own. Compared against the case target rather than tracked as
+   a flag, so a target typed by hand that happens to match still reads as that
+   case, and the two controls can never disagree about what is selected. */
+function caseOf(which) {
+  if (P[which + "Mode"] === "growth" && P[which + "Growth"] != null) return null;
+  const set = P[which + "Target"] != null ? P[which + "Target"]
+                                          : Math.round(caseTarget(which, "bull"));
+  for (const k of ["base", "bull"]) {
+    if (Math.abs(set - Math.round(caseTarget(which, k))) < 1) return k;
+  }
+  return null;
+}
+/* The master control is only on a case when both assets are on that same one.
+   Move either of them separately and it shows none, which is what lets the two
+   panels below stay free without the top of the page lying about them. */
+function masterCase() {
+  const e = caseOf("eth");
+  return e && e === caseOf("btc") ? e : null;
+}
+function applyCase(k) {
+  ["eth", "btc"].forEach(w => {
+    P[w + "Target"] = Math.round(caseTarget(w, k));
+    P[w + "Mode"] = "target";
+    P[w + "Growth"] = null;
+  });
+}
+
 function target(which) {
   const set = P[which + "Target"];
   if (set != null) return set;
@@ -190,12 +218,18 @@ function render() {
   $("monthnote").textContent = t("al.g.month.n",
     {total: S.eur(monthlyIn(), 0), year: S.eur(monthlyIn() * 12, 0)});
 
-  /* scenario */
+  /* scenario: today's rates, or one of the two cases applied to both assets */
+  const mc = masterCase();
   $("scenario").querySelectorAll("button").forEach(b => {
-    b.setAttribute("aria-pressed", String(b.dataset.sc === scenario));
-    b.textContent = t(b.dataset.sc === "base" ? "al.sc.base" : "al.sc.sim");
+    const on = b.dataset.sc === "base" ? !simOn : simOn && b.dataset.k === mc;
+    b.setAttribute("aria-pressed", String(on));
+    b.textContent = t(b.dataset.sc === "base" ? "al.sc.base" : "common." + b.dataset.k);
   });
-  $("scnote").textContent = t(simOn ? "al.sc.sim.d" : "al.sc.base.d");
+  $("scnote").textContent = !simOn ? t("al.sc.base.d")
+    : mc ? t("al.sc.case.d", {
+            case: t("common." + mc).toLowerCase(),
+            eth: S.eur(shownTarget("eth")), btc: S.eur(shownTarget("btc"))})
+         : t("al.sc.custom.d", {eth: S.eur(shownTarget("eth")), btc: S.eur(shownTarget("btc"))});
 
   /* figures */
   const base = simulate(years, 0, 0), sim = simulate(years, ge, gb);
@@ -236,10 +270,6 @@ function render() {
   /* parameters */
   $("yearsV").textContent = t("al.years.v",{n:years});
   $("years").value = years;
-  $("preset").textContent = t("al.preset");
-  $("presetnote").textContent = t("al.preset.d",
-    {btc:S.usd(SIMC().bull.btc_usd), eth:S.usd(SIMC().bull.eth_usd),
-     year:(A.simulator_cases && A.simulator_cases.horizon_year) || A.horizon_year});
 
   ["eth","btc"].forEach(w => paintAsset(w, w === "eth" ? ge : gb, act));
 
@@ -324,10 +354,12 @@ function buildInputs() {
       `<div class="row"><span id="${w}L3"></span><b id="${w}V3"></b></div></div>`;
 
     $(w+"T").addEventListener("input", e => {
-      P[w+"Target"] = Math.max(1, +e.target.value || 1); P[w+"Mode"] = "target"; save(); render();
+      P[w+"Target"] = Math.max(1, +e.target.value || 1); P[w+"Mode"] = "target";
+      scenario = "sim"; save(); render();
     });
     $(w+"G").addEventListener("input", e => {
-      P[w+"Growth"] = +e.target.value/100; P[w+"Mode"] = "growth"; save(); render();
+      P[w+"Growth"] = +e.target.value/100; P[w+"Mode"] = "growth";
+      scenario = "sim"; save(); render();
     });
     $(w+"S").addEventListener("input", e => {
       P[w+"Spot"] = Math.max(1, +e.target.value||1); save(); render();
@@ -335,7 +367,9 @@ function buildInputs() {
     $(w+"panel").querySelector("[data-case]").addEventListener("click", e => {
       const b = e.target.closest("button[data-k]"); if (!b) return;
       P[w+"Target"] = Math.round(caseTarget(w, b.dataset.k));
-      P[w+"Mode"] = "target"; save(); render();
+      P[w+"Mode"] = "target"; P[w+"Growth"] = null;
+      /* choosing a case for one asset is a request to see growth applied */
+      scenario = "sim"; save(); render();
     });
   });
 }
@@ -347,8 +381,11 @@ function paintAsset(w, g, act) {
   const drv = ` <span class="drv">${t("al.derived")}</span>`;
 
   $(w+"CaseLbl").textContent = t("al.case.load");
-  $(w+"panel").querySelectorAll("[data-case] button").forEach(b =>
-    b.textContent = t("common." + b.dataset.k));
+  const on = caseOf(w);
+  $(w+"panel").querySelectorAll("[data-case] button").forEach(b => {
+    b.textContent = t("common." + b.dataset.k);
+    b.setAttribute("aria-pressed", String(b.dataset.k === on));
+  });
   $(w+"TLbl").innerHTML = t("al.target", {asset: t("common."+w)}) + (byTarget ? "" : drv);
   $(w+"SLbl").textContent = t("al.spot");
   $(w+"GLbl").innerHTML = t("al.growth."+w) + (byTarget ? drv : "");
@@ -385,13 +422,12 @@ function paintAsset(w, g, act) {
 /* ---------------------------------------------------------------- wiring */
 $("scenario").addEventListener("click", e => {
   const b = e.target.closest("button[data-sc]"); if (!b) return;
-  scenario = b.dataset.sc; render();
-});
-$("years").addEventListener("input", e => { P.years = +e.target.value; save(); render(); });
-$("preset").addEventListener("click", () => {
-  ["eth","btc"].forEach(w => { P[w+"Target"] = null; P[w+"Mode"] = "target"; P[w+"Growth"] = null; });
+  if (b.dataset.sc === "base") { scenario = "base"; render(); return; }
+  applyCase(b.dataset.k);
   scenario = "sim"; save(); render();
 });
+$("years").addEventListener("input", e => { P.years = +e.target.value; save(); render(); });
+
 $("reset").addEventListener("click", () => {
   try { localStorage.removeItem(STORE); } catch (e) {}
   P = defaults(); edited = false; scenario = "base"; render();
