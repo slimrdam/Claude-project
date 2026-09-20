@@ -18,4 +18,4 @@ jobs:
       - name: Probe
         env:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-        run: python -u tools/probe.py
+        run: python -u tools/sbet_probe.py
