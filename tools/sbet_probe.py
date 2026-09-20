@@ -88,37 +88,94 @@ def b_regsho():
 
 # ------------------------------------------ C: FINRA short interest (numerator)
 def c_shortint():
-    urls = [
-        ("GET api.finra.org consolidatedShortInterest",
-         "https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest?limit=5"),
-        ("GET api.finra.org filtered by symbol",
-         "https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest"
-         "?compareFilters=[{\"fieldName\":\"symbolCode\",\"fieldValue\":\"SBET\",\"compareType\":\"equal\"}]&limit=40"),
-    ]
-    for label, u in urls:
-        print("\n--", label)
+    """FINRA consolidated short interest: the numerator, by settlement date."""
+    base = "https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest"
+    flt = [{"compareType": "EQUAL", "fieldName": "symbolCode", "fieldValue": "SBET"}]
+
+    print("-- POST, compareType EQUAL")
+    for body in (
+        {"limit": 60, "compareFilters": flt},
+        {"limit": 60, "compareFilters": flt, "sortFields": ["-settlementDate"]},
+    ):
         try:
-            print(get(u, headers={"Accept": "application/json"}, timeout=25)[:2000])
+            req = urllib.request.Request(
+                base, data=json.dumps(body).encode(), method="POST",
+                headers={"User-Agent": UA, "Content-Type": "application/json",
+                         "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                rows = json.loads(r.read().decode())
+            print("   body=%s -> %d rows" % (json.dumps(body)[:60], len(rows)))
+            rows.sort(key=lambda x: x.get("settlementDate") or "")
+            for x in rows:
+                print("   %s  short=%12s  prev=%12s  chg=%+8s (%+.2f%%)  advol=%10s  dtc=%s"
+                      % (x.get("settlementDate"),
+                         f'{x.get("currentShortPositionQuantity") or 0:,}',
+                         f'{x.get("previousShortPositionQuantity") or 0:,}',
+                         f'{x.get("changePreviousNumber") or 0:,}',
+                         x.get("changePercent") or 0,
+                         f'{x.get("averageDailyVolumeQuantity") or 0:,}',
+                         x.get("daysToCoverQuantity")))
+            if rows:
+                return
+        except urllib.error.HTTPError as e:
+            print("   HTTP %s: %s" % (e.code, e.read()[:300]))
         except Exception as e:
-            print("   failed: %s %s" % (type(e).__name__, getattr(e, "code", e)))
-    # POST form, which is how FINRA's own console queries it
-    print("\n-- POST api.finra.org consolidatedShortInterest")
+            print("   %s: %s" % (type(e).__name__, e))
+
+    print("-- GET with url-encoded compareFilters")
     try:
-        body = json.dumps({
-            "compareFilters": [{"fieldName": "symbolCode",
-                                "fieldValue": "SBET", "compareType": "equal"}],
-            "limit": 40,
-            "sortFields": ["-settlementDate"],
-        }).encode()
-        req = urllib.request.Request(
-            "https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest",
-            data=body, method="POST",
-            headers={"User-Agent": UA, "Content-Type": "application/json",
-                     "Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=25) as r:
-            print(r.read().decode("utf-8", "replace")[:3000])
+        import urllib.parse
+        u = base + "?limit=60&compareFilters=" + urllib.parse.quote(json.dumps(flt))
+        print(get(u, headers={"Accept": "application/json"}, timeout=30)[:2500])
+    except urllib.error.HTTPError as e:
+        print("   HTTP %s: %s" % (e.code, e.read()[:300]))
     except Exception as e:
-        print("   failed: %s %s" % (type(e).__name__, getattr(e, "code", e)))
+        print("   %s: %s" % (type(e).__name__, e))
+
+
+def h_yahoo():
+    """Float, shares outstanding and Yahoo's own short interest snapshot."""
+    bu = "https://query2.finance.yahoo.com"
+    for label, u in [
+        ("quoteSummary defaultKeyStatistics",
+         bu + "/v10/finance/quoteSummary/SBET?modules=defaultKeyStatistics%2Cprice%2CsummaryDetail"),
+        ("v7 quote", bu + "/v7/finance/quote?symbols=SBET"),
+        ("v8 chart 3mo",
+         "https://query1.finance.yahoo.com/v8/finance/chart/SBET?range=3mo&interval=1d"),
+    ]:
+        print("\n-- " + label)
+        try:
+            txt = get(u, headers={"Accept": "application/json"}, timeout=25)
+        except urllib.error.HTTPError as e:
+            print("   HTTP %s" % e.code); continue
+        except Exception as e:
+            print("   %s: %s" % (type(e).__name__, e)); continue
+        try:
+            j = json.loads(txt)
+        except Exception:
+            print("   non-JSON: " + txt[:200]); continue
+        if "chart" in j:
+            res = (j["chart"].get("result") or [{}])[0]
+            ts = res.get("timestamp") or []
+            q = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+            print("   date,close,volume")
+            for i in range(max(0, len(ts) - 40), len(ts)):
+                print("   %s,%s,%s" % (
+                    dt.datetime.utcfromtimestamp(ts[i]).date(),
+                    (q.get("close") or [None])[i], (q.get("volume") or [None])[i]))
+        elif "quoteSummary" in j:
+            res = (j["quoteSummary"].get("result") or [{}])[0]
+            ks = res.get("defaultKeyStatistics") or {}
+            for k in ("sharesOutstanding", "floatShares", "sharesShort",
+                      "sharesShortPriorMonth", "shortRatio", "shortPercentOfFloat",
+                      "dateShortInterest", "sharesShortPreviousMonthDate",
+                      "impliedSharesOutstanding"):
+                v = ks.get(k)
+                if isinstance(v, dict):
+                    v = v.get("fmt") or v.get("raw")
+                print("   %-30s %s" % (k, v))
+        else:
+            print("   " + txt[:400])
 
 
 # ------------------------------------------- D: EDGAR filings (the catalysts)
@@ -208,7 +265,8 @@ for name, fn in [("A. resolve SBET -> CIK", a_cik),
                  ("D. EDGAR recent filings", d_filings),
                  ("E. shares outstanding history", e_shares),
                  ("F. SBET daily OHLCV (stooq)", f_price),
-                 ("G. SEC fails-to-deliver", g_ftd)]:
+                 ("G. SEC fails-to-deliver", g_ftd),
+                 ("H. Yahoo float / short interest / price", h_yahoo)]:
     section(name, fn)
 
 print("\n\nPROBE COMPLETE", flush=True)
