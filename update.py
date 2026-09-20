@@ -14,7 +14,7 @@ Exits non-zero on any failure so a scheduled job goes red instead of publishing 
 or half-built data.
 """
 
-import argparse, csv, datetime as dt, json, math, os, pathlib, sys, time
+import argparse, csv, datetime as dt, json, math, os, pathlib, re, sys, time
 import urllib.parse
 import requests
 
@@ -420,30 +420,111 @@ def fetch_strc():
             "history": [[r["t"], round(float(r["c"]), 2)] for r in rows[:180]][::-1]}
 
 
-def fetch_short_interest(ticker):
-    """Short interest from Nasdaq's own filing data. Fintel serves a Cloudflare
-    challenge to servers; this is the same twice-monthly FINRA data it reports."""
-    url = (f"https://api.nasdaq.com/api/quote/{ticker}/short-interest?assetclass=stocks")
-    j = get(url, headers={"Accept": "application/json"}).json()
-    rows = (((j.get("data") or {}).get("shortInterestTable") or {}).get("rows") or [])
-    if not rows:
-        raise RuntimeError("nasdaq returned no short-interest rows")
-    def n(x):
-        try:
-            return float(str(x).replace(",", ""))
-        except (ValueError, TypeError):
-            return None
+SA_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"}
+
+FINRA_SHORT = ("https://api.finra.org/data/group/otcMarket/name/"
+               "consolidatedShortInterest")
+
+# Each figure on the statistics page is written twice: a rounded "value" for
+# display and an exact "hover". The hover is the one worth keeping.
+_SA_ROW = re.compile(
+    r'id:"[A-Za-z0-9_]+",title:"((?:[^"\\]|\\.)*)",'
+    r'value:"((?:[^"\\]|\\.)*)"(?:,hover:"((?:[^"\\]|\\.)*)")?')
+
+
+def _sa_num(txt):
+    """'35,044,851' -> 35044851.0   '18.433%' -> 0.18433   '190.12M' -> 190120000.0"""
+    if txt is None:
+        return None
+    t = txt.strip().replace(",", "").replace("+", "")
+    pct = t.endswith("%")
+    t = t.rstrip("%")
+    mult = 1.0
+    if t and t[-1] in "KMBT":
+        mult = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}[t[-1]]
+        t = t[:-1]
+    try:
+        v = float(t) * mult
+    except ValueError:
+        return None
+    return v / 100 if pct else v
+
+
+def fetch_screener_short(ticker):
+    """Float and the reported short percentages as a published screener states
+    them. The float is the part no free filing gives directly, and it is the
+    denominator that decides whether the position reads as 18% or 21%."""
+    html = get(f"https://stockanalysis.com/stocks/{ticker.lower()}/statistics/",
+               headers=SA_UA).text
+    rows = {}
+    for m in _SA_ROW.finditer(html):
+        rows[m.group(1)] = m.group(3) or m.group(2)
+    if "Short % of Float" not in rows:
+        raise RuntimeError("stockanalysis: short-selling block not found")
+    return {"float_shares": _sa_num(rows.get("Float")),
+            "shares_outstanding": _sa_num(rows.get("Shares Outstanding")),
+            "interest": _sa_num(rows.get("Short Interest")),
+            "prev_interest": _sa_num(rows.get("Short Previous Month")),
+            "pct_float": _sa_num(rows.get("Short % of Float")),
+            "pct_shares_out": _sa_num(rows.get("Short % of Shares Out")),
+            "days_to_cover": _sa_num(rows.get("Short Ratio (days to cover)"))}
+
+
+def fetch_finra_short(ticker, years=3):
+    """FINRA's own twice-monthly settlement series: the authoritative count of
+    shares sold short, with history."""
+    today = dt.date.today()
+    body = {"limit": 200,
+            "compareFilters": [{"compareType": "EQUAL",
+                                "fieldName": "symbolCode", "fieldValue": ticker}],
+            "dateRangeFilters": [{"fieldName": "settlementDate",
+                                  "startDate": (today - dt.timedelta(days=365 * years)).isoformat(),
+                                  "endDate": today.isoformat()}]}
+    r = requests.post(FINRA_SHORT, json=body, timeout=30,
+                      headers={**UA, "Accept": "application/json"})
+    if r.status_code != 200:
+        raise RuntimeError(f"finra short interest HTTP {r.status_code}")
     hist = []
-    for r in rows:
-        m, d, y = r["settlementDate"].split("/")
-        hist.append({"date": f"{y}-{m}-{d}", "interest": n(r.get("interest")),
-                     "avg_volume": n(r.get("avgDailyShareVolume")),
-                     "days_to_cover": n(r.get("daysToCover"))})
+    for x in r.json():
+        d, q = x.get("settlementDate"), x.get("currentShortPositionQuantity")
+        if not d or q is None:
+            continue
+        av = x.get("averageDailyVolumeQuantity")
+        hist.append({"date": d, "interest": float(q),
+                     "avg_volume": float(av) if av else None,
+                     "days_to_cover": x.get("daysToCoverQuantity")})
     hist.sort(key=lambda r: r["date"])
+    if not hist:
+        raise RuntimeError(f"finra returned no rows for {ticker}")
+    return hist
+
+
+def fetch_short_interest(ticker):
+    """Short interest from FINRA, float and reported percentages from a screener.
+
+    Nasdaq's endpoint, which this used before, now times out from a server, and
+    fintel serves a Cloudflare challenge. FINRA publishes the settlement figures
+    itself, so the count comes from the source; only the float has to be read off
+    a screener. The screener half is best-effort: without it the page falls back
+    to the float kept by hand in notes.json.
+    """
+    hist = fetch_finra_short(ticker)
     last = hist[-1]
-    return {"interest": last["interest"], "settlement": last["date"],
-            "avg_volume": last["avg_volume"], "days_to_cover": last["days_to_cover"],
-            "history": hist}
+    out = {"interest": last["interest"], "settlement": last["date"],
+           "avg_volume": last["avg_volume"],
+           "days_to_cover": last["days_to_cover"], "history": hist}
+    try:
+        sa = fetch_screener_short(ticker)
+    except Exception as e:
+        print(f"warn: screener float failed ({e})", file=sys.stderr)
+        return out
+    out.update({"float_shares": sa["float_shares"],
+                "pct_float": sa["pct_float"],
+                "pct_shares_out": sa["pct_shares_out"],
+                "reported_days_to_cover": sa["days_to_cover"],
+                "reported_source": "stockanalysis.com"})
+    return out
 
 
 # ---------------------------------------------------------------- momentum

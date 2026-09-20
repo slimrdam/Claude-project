@@ -1,30 +1,37 @@
-"""Show the context around each short-interest label so the parser can be written."""
-import re, urllib.request
+"""Exercise the rewritten short-interest fetchers against the live sources."""
+import importlib.util, json, sys
 
-UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36")
-LABELS = ("Short Interest", "Short Previous Month", "Short % of Shares Out",
-          "Short % of Float", "Short Ratio", "Shares Outstanding", "Float")
+spec = importlib.util.spec_from_file_location("upd", "update.py")
+u = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(u)
 
+print("=" * 64, "\n== screener (stockanalysis)\n", "=" * 64, flush=True)
+try:
+    sa = u.fetch_screener_short("SBET")
+    for k, v in sa.items():
+        print(f"  {k:<20} {v!r}")
+except Exception as e:
+    print("FAILED %s: %s" % (type(e).__name__, e))
 
-def get(url):
-    req = urllib.request.Request(url, headers={
-        "User-Agent": UA, "Accept": "*/*", "Accept-Encoding": "identity"})
-    return urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
+print("\n" + "=" * 64, "\n== FINRA settlement series\n", "=" * 64, flush=True)
+try:
+    h = u.fetch_finra_short("SBET")
+    print("  rows:", len(h), " first:", h[0]["date"], " last:", h[-1]["date"])
+    for r in h[-6:]:
+        print("   ", r)
+except Exception as e:
+    print("FAILED %s: %s" % (type(e).__name__, e))
 
+print("\n" + "=" * 64, "\n== combined fetch_short_interest\n", "=" * 64, flush=True)
+try:
+    out = u.fetch_short_interest("SBET")
+    small = {k: v for k, v in out.items() if k != "history"}
+    print(json.dumps(small, indent=2, default=str))
+    print("  history rows:", len(out["history"]))
+    fl, pf = out.get("float_shares"), out.get("pct_float")
+    if fl and pf:
+        print(f"  CHECK interest/float = {out['interest']/fl:.5f} vs reported {pf:.5f}")
+except Exception as e:
+    print("FAILED %s: %s" % (type(e).__name__, e))
 
-for label, url in [
-    ("__data.json", "https://stockanalysis.com/stocks/sbet/statistics/__data.json"),
-    ("page html", "https://stockanalysis.com/stocks/sbet/statistics/"),
-]:
-    print("\n" + "=" * 64)
-    print("== " + label)
-    print("=" * 64, flush=True)
-    body = get(url)
-    print("len", len(body))
-    for lab in LABELS:
-        for m in list(re.finditer(re.escape(lab), body))[:2]:
-            w = body[m.start():m.start() + 150]          # greedy window
-            w = re.sub(r"\s+", " ", w)
-            print("  [%-22s] %s" % (lab, w))
 print("\n\nPROBE COMPLETE", flush=True)

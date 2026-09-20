@@ -205,18 +205,21 @@ function drawShort() {
   const own = (D.notes && D.notes.ownership) || {};
   const pct = cf.shares ? sh.interest / cf.shares : null;
   /* The share that matters is of the float, not of every share issued: the shares
-     held strategically cannot be borrowed. A figure entered from a published
-     screener wins; without one, the FINRA settlement is divided by the float, so
-     the percentage still moves between readings. */
+     held strategically cannot be borrowed. A figure entered by hand wins, then the
+     percentage the feed reports on its own float, and only failing both is the
+     FINRA settlement divided by the float kept in notes.json. That last route is
+     the one that drifts: a float left stale reads high. */
+  const flN = sh.float_shares || own.float_shares;
   const fl = own.short_float_pct != null ? own.short_float_pct
-           : own.float_shares ? sh.interest / own.float_shares : null;
+           : sh.pct_float != null ? sh.pct_float
+           : flN ? sh.interest / flN : null;
   const shortN = own.short_shares != null ? own.short_shares : sh.interest;
   const dtc = own.days_to_cover != null ? own.days_to_cover : sh.days_to_cover;
   $("short").innerHTML =
     cell(t("sb.short.n"), S.num(shortN / 1e6, 1) + "M",
          t("sb.short.settle", {date: S.date(own.reported_as_of || sh.settlement)}), C.down) +
     cell(t("sb.short.float"), fl == null ? "—" : S.pct(fl, 0),
-         t("sb.short.float.x", {n: S.num(own.float_shares / 1e6, 0) + "M"}), C.down) +
+         t("sb.short.float.x", {n: S.num(flN / 1e6, 0) + "M"}), C.down) +
     cell(t("sb.short.pct"), pct == null ? "—" : S.pct(pct, 1),
          t("sb.short.pct.x", {n: S.num(cf.shares / 1e6, 0) + "M"})) +
     cell(t("sb.short.days"), S.num(dtc, 1), t("sb.short.days.x"));
@@ -277,8 +280,11 @@ function drawFigs() {
   const shares = cf.shares;          // compute() emits 'shares', not 'shares_outstanding'
   const ethPer = cf.eth_held / shares;
   const mnav = st.mnav_now, disc = mnav != null && mnav < 1;
+  const shf = m.short || {};
+  const flN = shf.float_shares || own.float_shares;
   const fl = own.short_float_pct != null ? own.short_float_pct
-           : (own.float_shares && m.short) ? m.short.interest / own.float_shares : null;
+           : shf.pct_float != null ? shf.pct_float
+           : (flN && m.short) ? m.short.interest / flN : null;
 
   $("stale").innerHTML = cf.stale
     ? `<div class="banner">${t("sb.stale",{days:cf.stale_days})}</div>` : "";

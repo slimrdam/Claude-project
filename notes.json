@@ -182,7 +182,7 @@
     "file": "assets/img/lgc-btc.jpg"
   },
   "ownership": {
-    "_comment": "Who owns the shares, and the short-interest figures as a published screener reports them. REPORTED VALUES WIN: set short_float_pct / short_shares / days_to_cover here and the page prints them verbatim. Leave short_float_pct null and the page falls back to dividing the FINRA settlement figure by float_shares, which keeps moving on its own but is only as good as the float. Holder positions are last-reported 13F; percentages are of shares outstanding.",
+    "_comment": "Who owns the shares, and the short-interest figures as a published screener reports them. PRECEDENCE: a value set here wins; failing that the page uses the percentage the feed reports on the float it publishes (stockanalysis, rebuilt nightly); failing both it divides the FINRA settlement by float_shares below. float_shares is now only that last-resort denominator, so a stale value makes the position read higher than the market sees it. Holder positions are last-reported 13F; percentages are of shares outstanding.",
     "as_of": "2026-08-31",
     "source": "13F filings and the FINRA short-interest settlement",
     "source_fr": "Déclarations 13F et arrêté FINRA des positions vendeuses",
