@@ -1,37 +1,19 @@
-"""Exercise the rewritten short-interest fetchers against the live sources."""
-import importlib.util, json, sys
+"""Verify the published data.json carries the reported float and percentage."""
+import json, urllib.request
 
-spec = importlib.util.spec_from_file_location("upd", "update.py")
-u = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(u)
-
-print("=" * 64, "\n== screener (stockanalysis)\n", "=" * 64, flush=True)
-try:
-    sa = u.fetch_screener_short("SBET")
-    for k, v in sa.items():
-        print(f"  {k:<20} {v!r}")
-except Exception as e:
-    print("FAILED %s: %s" % (type(e).__name__, e))
-
-print("\n" + "=" * 64, "\n== FINRA settlement series\n", "=" * 64, flush=True)
-try:
-    h = u.fetch_finra_short("SBET")
-    print("  rows:", len(h), " first:", h[0]["date"], " last:", h[-1]["date"])
-    for r in h[-6:]:
-        print("   ", r)
-except Exception as e:
-    print("FAILED %s: %s" % (type(e).__name__, e))
-
-print("\n" + "=" * 64, "\n== combined fetch_short_interest\n", "=" * 64, flush=True)
-try:
-    out = u.fetch_short_interest("SBET")
-    small = {k: v for k, v in out.items() if k != "history"}
-    print(json.dumps(small, indent=2, default=str))
-    print("  history rows:", len(out["history"]))
-    fl, pf = out.get("float_shares"), out.get("pct_float")
-    if fl and pf:
-        print(f"  CHECK interest/float = {out['interest']/fl:.5f} vs reported {pf:.5f}")
-except Exception as e:
-    print("FAILED %s: %s" % (type(e).__name__, e))
-
-print("\n\nPROBE COMPLETE", flush=True)
+url = "https://slimrdam.github.io/Claude-project/data.json"
+req = urllib.request.Request(url, headers={"User-Agent": "verify/1.0",
+                                           "Cache-Control": "no-cache"})
+d = json.loads(urllib.request.urlopen(req, timeout=40).read().decode())
+sh = (d.get("market") or {}).get("short") or {}
+print("generated:", d.get("generated"))
+print("stale feeds:", (d.get("market") or {}).get("stale"))
+for k in ("interest", "settlement", "days_to_cover", "float_shares",
+          "pct_float", "pct_shares_out", "reported_source"):
+    print(f"  {k:<18} {sh.get(k)!r}")
+print("  history rows    ", len(sh.get("history") or []))
+fl, pf = sh.get("float_shares"), sh.get("pct_float")
+print("\nVERDICT:", "live feed carries the reported float" if fl and pf
+      else "FELL BACK - float/pct missing")
+if fl and pf:
+    print(f"  page will print {pf*100:.1f}% of a {fl/1e6:.0f}M float")
