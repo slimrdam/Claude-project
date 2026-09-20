@@ -5,7 +5,7 @@ on a runner and prints to the job log. Every section is isolated: a failure
 prints its reason and the rest still run.
 """
 import json, io, sys, zipfile, time, datetime as dt
-import urllib.request, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 # SEC's fair-access policy wants a declared identity. Public GitHub address,
 # not a private one.
@@ -124,7 +124,6 @@ def c_shortint():
 
     print("-- GET with url-encoded compareFilters")
     try:
-        import urllib.parse
         u = base + "?limit=60&compareFilters=" + urllib.parse.quote(json.dumps(flt))
         print(get(u, headers={"Accept": "application/json"}, timeout=30)[:2500])
     except urllib.error.HTTPError as e:
