@@ -14,8 +14,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests
+      - run: pip install requests playwright
+      - run: python -m playwright install --with-deps chromium
       - name: Probe
         env:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-        run: python -u tools/probe.py
+        run: python -u tools/sec_browser_probe.py
