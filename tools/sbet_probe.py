@@ -1,274 +1,47 @@
-"""One-off research pull for SBET short interest. Not wired to the site.
+"""Can the nightly job reach stockanalysis without a browser? Runner-side."""
+import json, re, urllib.request, urllib.error
 
-The session container's egress policy blocks finra.org and sec.gov, so this runs
-on a runner and prints to the job log. Every section is isolated: a failure
-prints its reason and the rest still run.
-"""
-import json, io, sys, zipfile, time, datetime as dt
-import urllib.request, urllib.error, urllib.parse
-
-# SEC's fair-access policy wants a declared identity. Public GitHub address,
-# not a private one.
-UA = "slimrdam/Claude-project research slimrdam@users.noreply.github.com"
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36")
+FIELDS = ("Short Interest", "Short Previous Month", "Short % of Shares Out",
+          "Short % of Float", "Short Ratio", "Shares Outstanding")
 
 
-def get(url, headers=None, raw=False, timeout=30):
-    h = {"User-Agent": UA, "Accept-Encoding": "gzip, deflate",
-         "Accept": "*/*", "Connection": "close"}
-    h.update(headers or {})
-    req = urllib.request.Request(url, headers=h)
+def get(url, timeout=30):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": UA, "Accept": "text/html,application/json,*/*",
+        "Accept-Language": "en-US,en;q=0.9", "Accept-Encoding": "identity"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = r.read()
-        enc = r.headers.get("Content-Encoding")
-    if enc == "gzip":
-        import gzip
-        data = gzip.decompress(data)
-    return data if raw else data.decode("utf-8", "replace")
+        return r.status, r.read().decode("utf-8", "replace")
 
 
-def section(name, fn):
-    print("\n" + "=" * 70)
-    print("== " + name)
-    print("=" * 70, flush=True)
+for label, url in [
+    ("statistics page (plain HTTP)", "https://stockanalysis.com/stocks/sbet/statistics/"),
+    ("sveltekit __data.json", "https://stockanalysis.com/stocks/sbet/statistics/__data.json"),
+    ("api symbol statistics", "https://stockanalysis.com/api/symbol/s/SBET/statistics"),
+    ("api quotes", "https://stockanalysis.com/api/quotes/s/SBET"),
+]:
+    print("\n" + "=" * 64)
+    print("== " + label)
+    print("=" * 64, flush=True)
     try:
-        fn()
-    except Exception as e:
-        print("SECTION FAILED: %s: %s" % (type(e).__name__, e), flush=True)
-
-
-STATE = {}
-
-
-# ---------------------------------------------------------------- A: CIK
-def a_cik():
-    j = json.loads(get("https://www.sec.gov/files/company_tickers.json",
-                       headers={"Accept": "application/json"}))
-    for v in j.values():
-        if v["ticker"].upper() == "SBET":
-            STATE["cik"] = int(v["cik_str"])
-            print("SBET =", v["title"], "CIK", STATE["cik"])
-    if "cik" not in STATE:
-        print("SBET not in company_tickers.json")
-
-
-# --------------------------------------------- B: FINRA daily short volume
-def b_regsho():
-    print("date|shortVol|shortExemptVol|totalVol|shortPct")
-    d = dt.date.today()
-    got = tried = 0
-    misses = []
-    while got < 35 and tried < 80:
-        tried += 1
-        d -= dt.timedelta(days=1)
-        if d.weekday() >= 5:
-            continue
-        url = ("https://cdn.finra.org/equity/regsho/daily/CNMSshvol%s.txt"
-               % d.strftime("%Y%m%d"))
-        try:
-            txt = get(url, timeout=25)
-        except Exception as e:
-            misses.append("%s(%s)" % (d, getattr(e, "code", type(e).__name__)))
-            continue
-        for line in txt.splitlines():
-            p = line.split("|")
-            if len(p) >= 5 and p[1].strip() == "SBET":
-                try:
-                    sv, se, tv = float(p[2]), float(p[3]), float(p[4])
-                except ValueError:
-                    print("RAW(unparsed): " + line)
-                    break
-                print("%s|%.0f|%.0f|%.0f|%.1f%%"
-                      % (p[0], sv, se, tv, 100.0 * sv / tv if tv else 0))
-                got += 1
-                break
-    print("days found:", got)
-    if misses:
-        print("no file for:", " ".join(misses[:12]))
-
-
-# ------------------------------------------ C: FINRA short interest (numerator)
-def c_shortint():
-    """FINRA consolidated short interest: the numerator, by settlement date."""
-    base = "https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest"
-    flt = [{"compareType": "EQUAL", "fieldName": "symbolCode", "fieldValue": "SBET"}]
-
-    print("-- POST, compareType EQUAL")
-    rng = [{"fieldName": "settlementDate",
-             "startDate": "2026-01-01", "endDate": "2026-12-31"}]
-    for body in (
-        {"limit": 200, "compareFilters": flt, "dateRangeFilters": rng},
-        {"limit": 200, "compareFilters": flt, "sortFields": ["-settlementDate"]},
-        {"limit": 200, "compareFilters": flt, "offset": 200},
-    ):
-        try:
-            req = urllib.request.Request(
-                base, data=json.dumps(body).encode(), method="POST",
-                headers={"User-Agent": UA, "Content-Type": "application/json",
-                         "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                rows = json.loads(r.read().decode())
-            print("   body=%s -> %d rows" % (json.dumps(body)[:60], len(rows)))
-            rows.sort(key=lambda x: x.get("settlementDate") or "")
-            for x in rows:
-                print("   %s  short=%12s  prev=%12s  chg=%+8s (%+.2f%%)  advol=%10s  dtc=%s"
-                      % (x.get("settlementDate"),
-                         f'{x.get("currentShortPositionQuantity") or 0:,}',
-                         f'{x.get("previousShortPositionQuantity") or 0:,}',
-                         f'{x.get("changePreviousNumber") or 0:,}',
-                         x.get("changePercent") or 0,
-                         f'{x.get("averageDailyVolumeQuantity") or 0:,}',
-                         x.get("daysToCoverQuantity")))
-            if rows:
-                return
-        except urllib.error.HTTPError as e:
-            print("   HTTP %s: %s" % (e.code, e.read()[:300]))
-        except Exception as e:
-            print("   %s: %s" % (type(e).__name__, e))
-
-    print("-- GET with url-encoded compareFilters")
-    try:
-        u = base + "?limit=60&compareFilters=" + urllib.parse.quote(json.dumps(flt))
-        print(get(u, headers={"Accept": "application/json"}, timeout=30)[:2500])
+        status, body = get(url)
     except urllib.error.HTTPError as e:
-        print("   HTTP %s: %s" % (e.code, e.read()[:300]))
+        print("HTTP %s" % e.code); continue
     except Exception as e:
-        print("   %s: %s" % (type(e).__name__, e))
-
-
-def h_yahoo():
-    """Float, shares outstanding and Yahoo's own short interest snapshot."""
-    bu = "https://query2.finance.yahoo.com"
-    for label, u in [
-        ("quoteSummary defaultKeyStatistics",
-         bu + "/v10/finance/quoteSummary/SBET?modules=defaultKeyStatistics%2Cprice%2CsummaryDetail"),
-        ("v7 quote", bu + "/v7/finance/quote?symbols=SBET"),
-        ("v8 chart 3mo",
-         "https://query1.finance.yahoo.com/v8/finance/chart/SBET?range=3mo&interval=1d"),
-    ]:
-        print("\n-- " + label)
-        try:
-            txt = get(u, headers={"Accept": "application/json"}, timeout=25)
-        except urllib.error.HTTPError as e:
-            print("   HTTP %s" % e.code); continue
-        except Exception as e:
-            print("   %s: %s" % (type(e).__name__, e)); continue
-        try:
-            j = json.loads(txt)
-        except Exception:
-            print("   non-JSON: " + txt[:200]); continue
-        if "chart" in j:
-            res = (j["chart"].get("result") or [{}])[0]
-            ts = res.get("timestamp") or []
-            q = ((res.get("indicators") or {}).get("quote") or [{}])[0]
-            print("   date,close,volume")
-            for i in range(max(0, len(ts) - 40), len(ts)):
-                print("   %s,%s,%s" % (
-                    dt.datetime.utcfromtimestamp(ts[i]).date(),
-                    (q.get("close") or [None])[i], (q.get("volume") or [None])[i]))
-        elif "quoteSummary" in j:
-            res = (j["quoteSummary"].get("result") or [{}])[0]
-            ks = res.get("defaultKeyStatistics") or {}
-            for k in ("sharesOutstanding", "floatShares", "sharesShort",
-                      "sharesShortPriorMonth", "shortRatio", "shortPercentOfFloat",
-                      "dateShortInterest", "sharesShortPreviousMonthDate",
-                      "impliedSharesOutstanding"):
-                v = ks.get(k)
-                if isinstance(v, dict):
-                    v = v.get("fmt") or v.get("raw")
-                print("   %-30s %s" % (k, v))
-        else:
-            print("   " + txt[:400])
-
-
-# ------------------------------------------- D: EDGAR filings (the catalysts)
-def d_filings():
-    cik = STATE.get("cik")
-    if not cik:
-        print("skipped, no CIK")
-        return
-    j = json.loads(get("https://data.sec.gov/submissions/CIK%010d.json" % cik,
-                       headers={"Accept": "application/json"}))
-    print("name:", j.get("name"))
-    print("cover-page shares outstanding:",
-          j.get("EntityCommonStockSharesOutstanding"))
-    r = j["filings"]["recent"]
-    cut = (dt.date.today() - dt.timedelta(days=100)).isoformat()
-    n = 0
-    for i in range(len(r["form"])):
-        if r["filingDate"][i] >= cut:
-            n += 1
-            desc = (r.get("primaryDocDescription") or [""] * len(r["form"]))[i]
-            print("%s  %-12s %s" % (r["filingDate"][i], r["form"][i], desc[:50]))
-    print("filings in window:", n)
-
-
-# ------------------------- E: shares outstanding history (the denominator)
-def e_shares():
-    cik = STATE.get("cik")
-    if not cik:
-        print("skipped, no CIK")
-        return
-    time.sleep(0.3)
-    j = json.loads(get(
-        "https://data.sec.gov/api/xbrl/companyconcept/CIK%010d/dei/"
-        "EntityCommonStockSharesOutstanding.json" % cik,
-        headers={"Accept": "application/json"}))
-    pts = []
-    for unit in j.get("units", {}).values():
-        for p in unit:
-            pts.append((p.get("end"), p.get("val"), p.get("form"), p.get("filed")))
-    pts.sort(key=lambda x: (x[3] or "", x[0] or ""))
-    for end, val, form, filed in pts[-30:]:
-        print("asof=%s  shares=%s  form=%s  filed=%s" % (end, f"{val:,}", form, filed))
-
-
-# ----------------------------------------------- F: price and volume
-def f_price():
-    txt = get("https://stooq.com/q/d/l/?s=sbet.us&i=d", timeout=25)
-    lines = txt.strip().splitlines()
-    if len(lines) < 2:
-        print("unexpected payload:", txt[:200]); return
-    print(lines[0])
-    for line in lines[-40:]:
-        print(line)
-
-
-# ---------------------------------------------------- G: fails-to-deliver
-def g_ftd():
-    today = dt.date.today()
-    for back in range(0, 4):
-        m = (today.replace(day=1) - dt.timedelta(days=1)) if back else today
-        for _ in range(back - 1 if back else 0):
-            m = m.replace(day=1) - dt.timedelta(days=1)
-        for half in ("a", "b"):
-            url = ("https://www.sec.gov/files/data/frequently-requested-foia-"
-                   "document-fails-deliver-data/cnsfails%04d%02d%s.zip"
-                   % (m.year, m.month, half))
-            try:
-                blob = get(url, raw=True, timeout=40)
-                z = zipfile.ZipFile(io.BytesIO(blob))
-                hits = 0
-                with z.open(z.namelist()[0]) as fh:
-                    for raw in io.TextIOWrapper(fh, "latin-1"):
-                        p = raw.split("|")
-                        if len(p) > 5 and p[2].strip() == "SBET":
-                            print("  %s qty=%s price=%s" % (p[0], p[3], p[5]))
-                            hits += 1
-                print("-- %04d%02d%s SBET rows=%d" % (m.year, m.month, half, hits))
-            except Exception as e:
-                print("-- %04d%02d%s unavailable (%s)"
-                      % (m.year, m.month, half, getattr(e, "code", type(e).__name__)))
-            time.sleep(0.3)
-
-
-for name, fn in [("A. resolve SBET -> CIK", a_cik),
-                 ("B. FINRA daily short sale volume", b_regsho),
-                 ("C. FINRA consolidated short interest", c_shortint),
-                 ("D. EDGAR recent filings", d_filings),
-                 ("E. shares outstanding history", e_shares),
-                 ("F. SBET daily OHLCV (stooq)", f_price),
-                 ("G. SEC fails-to-deliver", g_ftd),
-                 ("H. Yahoo float / short interest / price", h_yahoo)]:
-    section(name, fn)
+        print("%s: %s" % (type(e).__name__, e)); continue
+    print("HTTP %s  len=%d" % (status, len(body)))
+    hits = [f for f in FIELDS if f in body]
+    print("field labels present:", hits or "none")
+    for f in FIELDS:
+        # the value sits near its label in the markup
+        m = re.search(re.escape(f) + r'.{0,160}?', body, re.S)
+        if m:
+            txt = re.sub(r"<[^>]+>", " ", m.group(0))
+            txt = re.sub(r"\s+", " ", txt).strip()
+            print("   %-24s | %s" % (f, txt[:110]))
+    if not hits:
+        print("---- head ----")
+        print(body[:400])
 
 print("\n\nPROBE COMPLETE", flush=True)
