@@ -93,9 +93,12 @@ def c_shortint():
     flt = [{"compareType": "EQUAL", "fieldName": "symbolCode", "fieldValue": "SBET"}]
 
     print("-- POST, compareType EQUAL")
+    rng = [{"fieldName": "settlementDate",
+             "startDate": "2026-01-01", "endDate": "2026-12-31"}]
     for body in (
-        {"limit": 60, "compareFilters": flt},
-        {"limit": 60, "compareFilters": flt, "sortFields": ["-settlementDate"]},
+        {"limit": 200, "compareFilters": flt, "dateRangeFilters": rng},
+        {"limit": 200, "compareFilters": flt, "sortFields": ["-settlementDate"]},
+        {"limit": 200, "compareFilters": flt, "offset": 200},
     ):
         try:
             req = urllib.request.Request(
